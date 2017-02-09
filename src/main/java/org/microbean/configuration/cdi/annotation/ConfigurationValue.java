@@ -28,6 +28,7 @@ import java.util.function.BiFunction;
 
 import javax.enterprise.context.ApplicationScoped;
 
+import javax.enterprise.util.AnnotationLiteral;
 import javax.enterprise.util.Nonbinding;
 
 import javax.inject.Qualifier;
@@ -40,5 +41,28 @@ public @interface ConfigurationValue {
 
   @Nonbinding
   String value() default "";
+
+  public static final class Literal extends AnnotationLiteral<ConfigurationValue> implements ConfigurationValue {
+
+    public static final ConfigurationValue INSTANCE = of("");
+    
+    private static final long serialVersionUID = 1L;
+    
+    private final String value;
+
+    public static final Literal of(final String value) {
+      return new Literal(value == null ? "" : value);
+    }
+
+    public final String value() {
+      return this.value;
+    }
+
+    private Literal(final String value) {
+      super();
+      this.value = value == null ? "" : value;
+    }
+
+  }
   
 }
