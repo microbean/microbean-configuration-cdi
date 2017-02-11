@@ -131,14 +131,34 @@
       <type>jar</type>
       <scope>test</scope>
     </dependency>
-
     
   </dependencies>
 
   <build>
+    <resources>
+
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      
+      <resource>
+        <targetPath>META-INF</targetPath>
+        <directory/>
+        <includes>
+          <include>LICENSE</include>
+        </includes>
+      </resource>
+
+    </resources>
     <pluginManagement>
       <plugins>
 
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>findbugs-maven-plugin</artifactId>
+          <version>3.0.4</version>
+        </plugin>
+        
         <plugin>
           <groupId>org.jboss.jandex</groupId>
           <artifactId>jandex-maven-plugin</artifactId>
@@ -148,7 +168,7 @@
       </plugins>
     </pluginManagement>
     <plugins>
-
+      
       <plugin>
         <groupId>org.jboss.jandex</groupId>
         <artifactId>jandex-maven-plugin</artifactId>
@@ -177,6 +197,12 @@
 
   <properties>
 
+    <!-- findbugs-maven-plugin properties; see http://gleclaire.github.io/findbugs-maven-plugin/findbugs-mojo.html -->
+    <findbugs.effort>Max</findbugs.effort>
+    <findbugs.excludeFilterFile>src/findbugs/exclude.xml</findbugs.excludeFilterFile>
+    <findbugs.threshold>Medium</findbugs.threshold>
+
+    <!-- maven-javadoc-plugin properties; see https://maven.apache.org/plugins/maven-javadoc-plugin/javadoc-mojo.html -->
     <links>http://docs.jboss.org/cdi/api/2.0-PFD/,http://docs.oracle.com/javaee/7/api/</links>
 
     <!-- Weld logging; see https://docs.jboss.org/weld/reference/latest/en-US/html/logging.html#_weld_se -->
@@ -189,6 +215,10 @@
     <plugins>
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>findbugs-maven-plugin</artifactId>
       </plugin>
     </plugins>
   </reporting>
