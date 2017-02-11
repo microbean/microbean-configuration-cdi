@@ -23,6 +23,7 @@ import javax.enterprise.event.Observes;
 
 import org.junit.Test;
 
+import org.microbean.configuration.cdi.annotation.Configuration;
 import org.microbean.configuration.cdi.annotation.ConfigurationCoordinate;
 import org.microbean.configuration.cdi.annotation.ConfigurationValue;
 
@@ -32,6 +33,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 @ApplicationScoped
+@Configuration("java")
 public class TestConfigurationsExtension {
 
   
@@ -62,7 +64,7 @@ public class TestConfigurationsExtension {
    * Instance methods.
    */
 
-  private final void onStartup(@Observes @Initialized(ApplicationScoped.class) final Object event, @ConfigurationValue("java.home") @ConfigurationCoordinate(name = "a", value = "b") @ConfigurationCoordinate(name = "c", value = "d") final String javaHome) {
+  private final void onStartup(@Observes @Initialized(ApplicationScoped.class) final Object event, @ConfigurationValue("home") @ConfigurationCoordinate(name = "a", value = "b") @ConfigurationCoordinate(name = "c", value = "d") final String javaHome) {
     assertEquals(System.getProperty("java.home"), javaHome);
   }
   

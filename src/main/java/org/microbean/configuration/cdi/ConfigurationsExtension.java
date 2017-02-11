@@ -60,6 +60,7 @@ import javax.enterprise.inject.spi.ProducerFactory; // for javadoc only
 
 import org.microbean.configuration.Configurations;
 
+import org.microbean.configuration.cdi.annotation.Configuration;
 import org.microbean.configuration.cdi.annotation.ConfigurationCoordinate;
 import org.microbean.configuration.cdi.annotation.ConfigurationCoordinates;
 import org.microbean.configuration.cdi.annotation.ConfigurationValue;
@@ -396,18 +397,20 @@ public class ConfigurationsExtension implements Extension {
     if (injectionPoint != null) {
       final Set<Annotation> qualifiers = injectionPoint.getQualifiers();
       if (qualifiers != null && !qualifiers.isEmpty()) {
-        final Optional<Annotation> configurationValueAnnotation = qualifiers.stream()
-          .filter(annotation -> annotation instanceof ConfigurationValue)
-          .findFirst();
-        if (configurationValueAnnotation != null && configurationValueAnnotation.isPresent()) {
-          final ConfigurationValue configurationValue = ConfigurationValue.class.cast(configurationValueAnnotation.get());
-          assert configurationValue != null;
-          returnValue = configurationValue.value();
+        ConfigurationValue configurationValue = null;
+        for (final Annotation q : qualifiers) {
+          if (q instanceof ConfigurationValue) {
+            configurationValue = ConfigurationValue.class.cast(q);
+            break;
+          }
+        }
+        if (configurationValue != null) {
+          Annotated annotated = injectionPoint.getAnnotated();
+          assert annotated != null;
+          returnValue = configurationValue.value().trim();
           assert returnValue != null;
           if (returnValue.isEmpty()) {
             // Try to get it from the annotated element
-            final Object annotated = injectionPoint.getAnnotated();
-            assert annotated != null;
             if (annotated instanceof AnnotatedField) {
               final Member field = ((AnnotatedField)annotated).getJavaMember();
               assert field != null;
@@ -449,6 +452,33 @@ public class ConfigurationsExtension implements Extension {
               }
             } else {
               returnValue = null;
+            }
+          }
+          if (returnValue != null) {
+            // See if the InjectionPoint is "inside" a "context" with
+            // a @Configuration annotation; that will define our
+            // prefix if so
+            assert annotated != null;
+            Configuration configuration = null;
+            while (configuration == null) {
+              configuration = annotated.getAnnotation(Configuration.class);              
+              if (configuration == null) {
+                if (annotated instanceof AnnotatedParameter) {
+                  annotated = ((AnnotatedParameter)annotated).getDeclaringCallable();
+                } else if (annotated instanceof AnnotatedMember) {
+                  annotated = ((AnnotatedMember)annotated).getDeclaringType();
+                } else if (annotated instanceof AnnotatedType) {
+                  break;
+                } else {
+                  assert false : "Unexpected annotated: " + annotated;
+                }
+              } else {
+                final String prefix = configuration.value().trim(); // TODO: trim?
+                assert prefix != null;
+                if (!prefix.isEmpty()) {
+                  returnValue = new StringBuilder(prefix).append(".").append(returnValue).toString();
+                }
+              }
             }
           }
         }
