@@ -23,8 +23,6 @@ import java.lang.reflect.Parameter;
 import java.lang.reflect.Member;
 import java.lang.reflect.Type;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -33,14 +31,14 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.Dependent;
 
 import javax.enterprise.event.Observes;
 
-import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.Produces; // for javadoc only
+
+import javax.enterprise.inject.literal.SingletonLiteral;
 
 import javax.enterprise.inject.spi.AfterBeanDiscovery;
 import javax.enterprise.inject.spi.Annotated;
@@ -57,6 +55,8 @@ import javax.enterprise.inject.spi.Extension;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.enterprise.inject.spi.ProcessInjectionPoint;
 import javax.enterprise.inject.spi.ProducerFactory; // for javadoc only
+
+import javax.inject.Singleton; // for javadoc only
 
 import org.microbean.configuration.Configurations;
 
@@ -98,8 +98,7 @@ public class ConfigurationsExtension implements Extension {
   /**
    * {@linkplain Observes Observes} the {@link BeforeBeanDiscovery}
    * event and ensures that {@link Configurations} is added as an
-   * {@link AnnotatedType} in {@linkplain ApplicationScoped
-   * application scope}.
+   * {@link AnnotatedType} in {@linkplain Singleton singleton scope}.
    *
    * @param event the {@link BeforeBeanDiscovery} event being
    * observed; if {@code null}, then no action will be taken
@@ -107,7 +106,7 @@ public class ConfigurationsExtension implements Extension {
   private final void addConfigurations(@Observes final BeforeBeanDiscovery event) {
     if (event != null) {
       event.addAnnotatedType(Configurations.class, "configurations")
-        .add(ApplicationScoped.Literal.INSTANCE);
+        .add(SingletonLiteral.INSTANCE);
     }
   }
 

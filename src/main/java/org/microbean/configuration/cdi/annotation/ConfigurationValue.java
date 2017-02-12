@@ -16,17 +16,12 @@
  */
 package org.microbean.configuration.cdi.annotation;
 
-import java.lang.annotation.Annotation;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
-import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import java.util.function.BiFunction;
-
-import javax.enterprise.context.ApplicationScoped;
 
 import javax.enterprise.util.AnnotationLiteral;
 import javax.enterprise.util.Nonbinding;
@@ -54,6 +49,7 @@ public @interface ConfigurationValue {
       return new Literal(value == null ? "" : value);
     }
 
+    @Override
     public final String value() {
       return this.value;
     }

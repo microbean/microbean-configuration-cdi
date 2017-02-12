@@ -30,7 +30,6 @@ import org.microbean.configuration.cdi.annotation.ConfigurationValue;
 import org.microbean.main.Main;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 @ApplicationScoped
 @Configuration("java")

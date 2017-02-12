@@ -45,10 +45,12 @@ public @interface ConfigurationCoordinate {
     
     private final String value;
 
+    @Override
     public final String name() {
       return this.name;
     }
     
+    @Override
     public final String value() {
       return this.value;
     }
