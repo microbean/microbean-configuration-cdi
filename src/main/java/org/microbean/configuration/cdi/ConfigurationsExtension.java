@@ -58,7 +58,8 @@ import javax.enterprise.inject.spi.ProducerFactory; // for javadoc only
 
 import javax.inject.Singleton; // for javadoc only
 
-import org.microbean.configuration.Configurations;
+import org.microbean.configuration.api.ConfigurationException;
+import org.microbean.configuration.api.Configurations;
 
 import org.microbean.configuration.cdi.annotation.Configuration;
 import org.microbean.configuration.cdi.annotation.ConfigurationCoordinate;
@@ -102,10 +103,15 @@ public class ConfigurationsExtension implements Extension {
    *
    * @param event the {@link BeforeBeanDiscovery} event being
    * observed; if {@code null}, then no action will be taken
+   *
+   * @exception ConfigurationException if no {@link Configurations}
+   * implementation is available
    */
   private final void addConfigurations(@Observes final BeforeBeanDiscovery event) {
     if (event != null) {
-      event.addAnnotatedType(Configurations.class, "configurations")
+      final Configurations configurations = Configurations.newInstance();
+      assert configurations != null;
+      event.addAnnotatedType(configurations.getClass(), "configurations")
         .add(SingletonLiteral.INSTANCE);
     }
   }
