@@ -23,6 +23,7 @@ import java.lang.reflect.Parameter;
 import java.lang.reflect.Member;
 import java.lang.reflect.Type;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -77,6 +78,32 @@ import org.microbean.configuration.cdi.annotation.ConfigurationValue;
  */
 public class ConfigurationsExtension implements Extension {
 
+
+  /**
+   * An {@linkplain Collections#unmodifiableMap(Map) immutable} {@link
+   * Map} of values for primitive {@link Type}s that have not been
+   * initialized (e.g. {@code 0} for {@code int.class}, {@code false}
+   * for {@code boolean.class} and so on).
+   *
+   * <p>This field is never {@code null}.</p>
+   *
+   * @see #produceConfigurationValue(InjectionPoint, Configurations)
+   */
+  private static final Map<Type, Object> uninitializedValues = Collections.unmodifiableMap(new HashMap<Type, Object>() {
+      private static final long serialVersionUID = 1L;
+      {
+        put(boolean.class, false);
+        put(byte.class, (byte)0);
+        put(char.class, (char)0);
+        put(double.class, 0D);
+        put(float.class, 0F);
+        put(int.class, 0);
+        put(long.class, 0L);
+        put(short.class, (short)0);
+        put(void.class, null);
+      }
+    });
+  
 
   /*
    * Constructors.
@@ -303,10 +330,17 @@ public class ConfigurationsExtension implements Extension {
   private static final Object produceConfigurationValue(final InjectionPoint injectionPoint, final Configurations configurations) {
     Objects.requireNonNull(injectionPoint);
     Objects.requireNonNull(configurations);
-    final Map<String, String> coordinates = getConfigurationCoordinates(injectionPoint);
-    final String name = getConfigurationPropertyName(injectionPoint);
+    final ConfigurationValueMetadata metadata = getMetadata(injectionPoint);
+    assert metadata != null : "metadata == null";
+    final Map<String, String> coordinates = metadata.getConfigurationCoordinates();
+    final String name = metadata.getName();
     assert name != null;
-    final Object returnValue = configurations.getValue(coordinates, name, injectionPoint.getType());
+    final String defaultValue = metadata.getDefaultValue();
+    final Type injectionPointType = injectionPoint.getType();
+    Object returnValue = configurations.getValue(coordinates, name, injectionPointType, defaultValue);
+    if (returnValue == null && defaultValue == null && injectionPointType instanceof Class && ((Class<?>)injectionPointType).isPrimitive()) {
+      returnValue = uninitializedValues.get(injectionPointType);
+    }
     return returnValue;
   }
 
@@ -316,186 +350,229 @@ public class ConfigurationsExtension implements Extension {
    */
 
 
-  /**
-   * Returns a {@link Map} of name-and-value pairs representing the
-   * <i>configuration coordinates</i> of the supplied {@link
-   * InjectionPoint}, drawn from any {@link ConfigurationCoordinates}
-   * qualifier annotation present on it.
-   *
-   * <p>This method may return {@code null}.</p>
-   *
-   * @param injectionPoint the {@link InjectionPoint} describing the
-   * site of injection; may be {@code null} in which case {@code null}
-   * will be returned
-   *
-   * @return a {@link Map} of name-and-value pairs representing
-   * configuration coordinates, or {@code null}
-   *
-   * @see InjectionPoint#getQualifiers()
-   *
-   * @see ConfigurationCoordinates 
-   */
-  private static final Map<String, String> getConfigurationCoordinates(final InjectionPoint injectionPoint) {
-    Map<String, String> returnValue = null;
+  private static final ConfigurationValueMetadata getMetadata(final InjectionPoint injectionPoint) {
+    ConfigurationValueMetadata returnValue = null;
     if (injectionPoint != null) {
       final Set<Annotation> qualifiers = injectionPoint.getQualifiers();
       if (qualifiers != null && !qualifiers.isEmpty()) {
-        final Optional<Annotation> configurationCoordinatesAnnotation = qualifiers.stream()
-          .filter(annotation -> annotation instanceof ConfigurationCoordinates)
-          .findFirst();
-        if (configurationCoordinatesAnnotation != null && configurationCoordinatesAnnotation.isPresent()) {
-          final ConfigurationCoordinates configurationCoordinates = ConfigurationCoordinates.class.cast(configurationCoordinatesAnnotation.get());
-          assert configurationCoordinates != null;
-          final ConfigurationCoordinate[] coordinateArray = configurationCoordinates.value();
-          assert coordinateArray != null;
-          if (coordinateArray.length > 0) {
-            returnValue = new HashMap<>();
-            for (final ConfigurationCoordinate coordinate : coordinateArray) {
-              assert coordinate != null;
-              final String name = coordinate.name();
+        Map<String, String> configurationCoordinates = null;
+        String name = null;
+        String defaultValue = null;
+        for (final Annotation qualifier : qualifiers) {
+          if (qualifier instanceof ConfigurationValue) {
+            if (name == null) {
+              final ConfigurationValue configurationValue = (ConfigurationValue)qualifier;
+              defaultValue = configurationValue.defaultValue().trim();
+              assert defaultValue != null;
+              if (defaultValue.equals(ConfigurationValue.NULL)) {
+                defaultValue = null;
+              }
+              Annotated annotated = injectionPoint.getAnnotated();
+              assert annotated != null;
+              name = configurationValue.value().trim();
               assert name != null;
-              final String value = coordinate.value();
-              assert value != null;
-              returnValue.put(name, value);
-            }
-          }
-        }
-      }
-    }
-    return returnValue;
-  }
-
-  /**
-   * Returns the name of a configuration value to be sought based off
-   * the {@link ConfigurationValue} annotation present on the supplied
-   * {@link InjectionPoint}.
-   *
-   * <p>This method may return {@code null}.</p>
-   *
-   * <p>This method checks to see if the supplied {@link
-   * InjectionPoint} {@linkplain InjectionPoint#getQualifiers() has a
-   * qualifier annotation} of type {@link ConfigurationValue} on it.
-   * If so, and the return value of its {@link
-   * ConfigurationValue#value() value} element is not the {@linkplain
-   * String#isEmpty() empty <code>String</code>}, then that value is
-   * returned.</p>
-   *
-   * <p>If a {@link ConfigurationValue} annotation is present but
-   * returns the {@linkplain String#isEmpty() empty
-   * <code>String</code>} from its {@link ConfigurationValue#value()
-   * value} element, then an attempt is made to get the name of the
-   * parameter or field that is the site of injection.  If such a name
-   * is available, then it is returned.</p>
-   *
-   * <p>If after all these attempts no name could be divined, then
-   * {@code null} is returned.</p>
-   *
-   * @param injectionPoint the {@link InjectionPoint} describing the
-   * site of injection; may be {@code null} in which case {@code null}
-   * will be returned
-   *
-   * @return the name of a configuration value to be sought, or {@code
-   * null}
-   */
-  private static final String getConfigurationPropertyName(final InjectionPoint injectionPoint) {
-    String returnValue = null;
-    if (injectionPoint != null) {
-      final Set<Annotation> qualifiers = injectionPoint.getQualifiers();
-      if (qualifiers != null && !qualifiers.isEmpty()) {
-        ConfigurationValue configurationValue = null;
-        for (final Annotation q : qualifiers) {
-          if (q instanceof ConfigurationValue) {
-            configurationValue = ConfigurationValue.class.cast(q);
-            break;
-          }
-        }
-        if (configurationValue != null) {
-          Annotated annotated = injectionPoint.getAnnotated();
-          assert annotated != null;
-          returnValue = configurationValue.value().trim();
-          assert returnValue != null;
-          if (returnValue.isEmpty()) {
-            // Try to get it from the annotated element
-            if (annotated instanceof AnnotatedField) {
-              final Member field = ((AnnotatedField)annotated).getJavaMember();
-              assert field != null;
-              returnValue = field.getName();
-            } else if (annotated instanceof AnnotatedParameter) {
-              final AnnotatedParameter<?> annotatedParameter = (AnnotatedParameter<?>)annotated;
-              
-              final AnnotatedMember<?> annotatedMember = annotatedParameter.getDeclaringCallable();
-              assert annotatedMember != null;
-              
-              final Member member = annotatedMember.getJavaMember();
-              assert member != null;
-              assert member instanceof Executable;
-              
-              final int parameterIndex = annotatedParameter.getPosition();
-              assert parameterIndex >= 0;
-              
-              final Parameter[] parameters = ((Executable)member).getParameters();
-              assert parameters != null;
-              assert parameters.length >= parameterIndex;
-              
-              final Parameter parameter = parameters[parameterIndex];
-              assert parameter != null;
-              
-              if (parameter.isNamePresent()) {
-                returnValue = parameter.getName();
-              } else {
-                throw new IllegalStateException("The parameter at index " +
-                                                parameterIndex +
-                                                " in " +
-                                                member +
-                                                " did not have a name available via reflection. " +
-                                                "Make sure you compiled its enclosing class, " +
-                                                member.getDeclaringClass().getName() +
-                                                ", with the -parameters option supplied to javac, " +
-                                                " or make use of the value() element of the " +
-                                                ConfigurationValue.class.getName() +
-                                                " annotation.");
-              }
-            } else {
-              returnValue = null;
-            }
-          }
-          if (returnValue != null) {
-            // See if the InjectionPoint is "inside" a "context" with
-            // a @Configuration annotation; that will define our
-            // prefix if so
-            assert annotated != null;
-            Configuration configuration = null;
-            while (configuration == null) {
-              configuration = annotated.getAnnotation(Configuration.class);              
-              if (configuration == null) {
-                if (annotated instanceof AnnotatedParameter) {
-                  annotated = ((AnnotatedParameter)annotated).getDeclaringCallable();
-                } else if (annotated instanceof AnnotatedMember) {
-                  annotated = ((AnnotatedMember)annotated).getDeclaringType();
-                } else if (annotated instanceof AnnotatedType) {
-                  break;
+              if (name.isEmpty()) {
+                // Try to get it from the annotated element
+                if (annotated instanceof AnnotatedField) {
+                  final Member field = ((AnnotatedField)annotated).getJavaMember();
+                  assert field != null;
+                  name = field.getName();
+                } else if (annotated instanceof AnnotatedParameter) {
+                  final AnnotatedParameter<?> annotatedParameter = (AnnotatedParameter<?>)annotated;
+                  
+                  final AnnotatedMember<?> annotatedMember = annotatedParameter.getDeclaringCallable();
+                  assert annotatedMember != null;
+                  
+                  final Member member = annotatedMember.getJavaMember();
+                  assert member != null;
+                  assert member instanceof Executable;
+                  
+                  final int parameterIndex = annotatedParameter.getPosition();
+                  assert parameterIndex >= 0;
+                  
+                  final Parameter[] parameters = ((Executable)member).getParameters();
+                  assert parameters != null;
+                  assert parameters.length >= parameterIndex;
+                  
+                  final Parameter parameter = parameters[parameterIndex];
+                  assert parameter != null;
+                  
+                  if (parameter.isNamePresent()) {
+                    name = parameter.getName();
+                  } else {
+                    throw new IllegalStateException("The parameter at index " +
+                                                    parameterIndex +
+                                                    " in " +
+                                                    member +
+                                                    " did not have a name available via reflection. " +
+                                                    "Make sure you compiled its enclosing class, " +
+                                                    member.getDeclaringClass().getName() +
+                                                    ", with the -parameters option supplied to javac, " +
+                                                    " or make use of the value() element of the " +
+                                                    ConfigurationValue.class.getName() +
+                                                    " annotation.");
+                  }
                 } else {
-                  assert false : "Unexpected annotated: " + annotated;
+                  name = null;
                 }
-              } else {
-                final String prefix = configuration.value().trim(); // TODO: trim?
-                assert prefix != null;
-                if (!prefix.isEmpty()) {
-                  returnValue = new StringBuilder(prefix).append(".").append(returnValue).toString();
+              }
+              if (name != null) {
+                // See if the InjectionPoint is "inside" a "context" with
+                // a @Configuration annotation; that will define our
+                // prefix if so
+                assert annotated != null;
+                Configuration configuration = null;
+                while (configuration == null) {
+                  configuration = annotated.getAnnotation(Configuration.class);              
+                  if (configuration == null) {
+                    if (annotated instanceof AnnotatedParameter) {
+                      annotated = ((AnnotatedParameter)annotated).getDeclaringCallable();
+                    } else if (annotated instanceof AnnotatedMember) {
+                      annotated = ((AnnotatedMember)annotated).getDeclaringType();
+                    } else if (annotated instanceof AnnotatedType) {
+                      break;
+                    } else {
+                      assert false : "Unexpected annotated: " + annotated;
+                    }
+                  } else {
+                    final String prefix = configuration.value().trim(); // TODO: trim?
+                    assert prefix != null;
+                    if (!prefix.isEmpty()) {
+                      name = new StringBuilder(prefix).append(".").append(name).toString();
+                    }
+                  }
+                }
+              }              
+            }
+          } else if (qualifier instanceof ConfigurationCoordinates) {
+            if (configurationCoordinates == null) {
+              final ConfigurationCoordinates configurationCoordinatesAnnotation = (ConfigurationCoordinates)qualifier;
+              final ConfigurationCoordinate[] coordinateArray = configurationCoordinatesAnnotation.value();
+              assert coordinateArray != null;
+              if (coordinateArray.length > 0) {
+                configurationCoordinates = new HashMap<>();
+                for (final ConfigurationCoordinate coordinate : coordinateArray) {
+                  assert coordinate != null;
+                  final String coordinateName = coordinate.name();
+                  assert coordinateName != null;
+                  final String coordinateValue = coordinate.value();
+                  assert coordinateValue != null;
+                  configurationCoordinates.put(coordinateName, coordinateValue);
                 }
               }
             }
           }
         }
+        returnValue = new ConfigurationValueMetadata(configurationCoordinates, name, defaultValue);
       }
     }
     return returnValue;
   }
-
+  
 
   /*
    * Inner and nested classes.
    */
+
+
+  private static final class ConfigurationValueMetadata {
+
+    private final Map<String, String> configurationCoordinates;
+
+    private final String name;
+
+    private final String defaultValue;
+    
+    private ConfigurationValueMetadata(final Map<String, String> configurationCoordinates,
+                                                     final String name,
+                                                     final String defaultValue) {
+      super();
+      Objects.requireNonNull(name);
+      if (configurationCoordinates == null || configurationCoordinates.isEmpty()) {
+        this.configurationCoordinates = Collections.emptyMap();
+      } else {
+        this.configurationCoordinates = Collections.unmodifiableMap(configurationCoordinates);
+      }
+      this.name = name;
+      if (defaultValue == null || defaultValue.equals(ConfigurationValue.NULL)) {
+        this.defaultValue = null;
+      } else {
+        this.defaultValue = defaultValue;
+      }
+    }
+
+    public final Map<String, String> getConfigurationCoordinates() {
+      return this.configurationCoordinates;
+    }
+
+    public final String getName() {
+      return this.name;
+    }
+
+    public final String getDefaultValue() {
+      return this.defaultValue;
+    }
+
+    @Override
+    public final int hashCode() {
+      int hashCode = 17;
+
+      final Object configurationCoordinates = this.getConfigurationCoordinates();
+      int c = configurationCoordinates == null ? 0 : configurationCoordinates.hashCode();
+      hashCode = 37 * hashCode + c;
+
+      final Object name = this.getName();
+      c = name == null ? 0 : name.hashCode();
+      hashCode = 37 * hashCode + c;
+
+      final Object defaultValue = this.getDefaultValue();
+      c = defaultValue == null ? 0 : defaultValue.hashCode();
+      hashCode = 37 * hashCode + c;
+
+      return hashCode;
+    }
+
+    @Override
+    public final boolean equals(final Object other) {
+      if (other == this) {
+        return true;
+      } else if (other instanceof ConfigurationValueMetadata) {
+        final ConfigurationValueMetadata her = (ConfigurationValueMetadata)other;
+
+        final Object configurationCoordinates = this.getConfigurationCoordinates();
+        if (configurationCoordinates == null) {
+          if (her.getConfigurationCoordinates() != null) {
+            return false;
+          }
+        } else if (!configurationCoordinates.equals(her.getConfigurationCoordinates())) {
+          return false;
+        }
+
+        final Object name = this.getName();
+        if (name == null) {
+          if (her.getName() != null) {
+            return false;
+          }
+        } else if (!name.equals(her.getName())) {
+          return false;
+        }
+
+        final Object defaultValue = this.getDefaultValue();
+        if (defaultValue == null) {
+          if (her.getDefaultValue() != null) {
+            return false;
+          }
+        } else if (!defaultValue.equals(her.getDefaultValue())) {
+          return false;
+        }
+
+        return true;        
+      } else {
+        return false;
+      }
+    }
+    
+  }
 
 
   /**

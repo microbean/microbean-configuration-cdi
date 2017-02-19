@@ -34,8 +34,13 @@ import javax.inject.Qualifier;
 @Target({ ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER, ElementType.TYPE })
 public @interface ConfigurationValue {
 
+  public static final String NULL = "\0";
+  
   @Nonbinding
   String value() default "";
+
+  @Nonbinding
+  String defaultValue() default NULL;
 
   public static final class Literal extends AnnotationLiteral<ConfigurationValue> implements ConfigurationValue {
 
@@ -45,20 +50,32 @@ public @interface ConfigurationValue {
     
     private final String value;
 
-    public static final Literal of(final String value) {
-      return new Literal(value == null ? "" : value);
+    private final String defaultValue;
+
+    private Literal(final String value, final String defaultValue) {
+      super();
+      this.value = value == null ? "" : value;
+      this.defaultValue = defaultValue == null ? NULL : defaultValue;
     }
 
+    @Override
+    public final String defaultValue() {
+      return this.defaultValue;
+    }
+    
     @Override
     public final String value() {
       return this.value;
     }
 
-    private Literal(final String value) {
-      super();
-      this.value = value == null ? "" : value;
+    public static final Literal of(final String value) {
+      return new Literal(value, NULL);
     }
 
+    public static final Literal of(final String value, final String defaultValue) {
+      return new Literal(value, defaultValue);
+    }
+    
   }
   
 }
