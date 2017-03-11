@@ -299,7 +299,7 @@ public class ConfigurationsExtension implements Extension {
    * BeanManager)} method.</p>
    *
    * <p>Every producer method that incorporates this method will first
-   * {@linkplain #getConfigurationCoordinates(InjectionPoint)
+   * {@linkplain #getMetadata(InjectionPoint)
    * determine the configuration coordinates at the site of injection}
    * as well as the name of the configuration value that should be
    * injected.  {@link Configurations#getValue(Map, String, Type)} is
