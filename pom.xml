@@ -12,7 +12,7 @@
   <parent>
     <groupId>org.microbean</groupId>
     <artifactId>microbean-pluginmanagement-pom</artifactId>
-    <version>1</version>
+    <version>2</version>
   </parent>
 
   <name>MicroBean Configuration for CDI</name>
@@ -52,7 +52,7 @@
       <dependency>
         <groupId>org.jboss.weld</groupId>
         <artifactId>weld-core-bom</artifactId>
-        <version>3.0.0.CR1</version>
+        <version>3.0.0.CR2</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -67,28 +67,28 @@
       <dependency>
         <groupId>org.microbean</groupId>
         <artifactId>microbean-configuration-api</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
+        <version>0.1.0</version>
         <type>jar</type>
       </dependency>
       
       <dependency>
         <groupId>org.microbean</groupId>
         <artifactId>microbean-configuration</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
+        <version>0.1.0</version>
         <type>jar</type>
       </dependency>
       
       <dependency>
         <groupId>org.microbean</groupId>
         <artifactId>microbean-main</artifactId>
-        <version>3</version>
+        <version>4</version>
         <type>jar</type>
       </dependency>
 
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-simple</artifactId>
-        <version>1.7.21</version>
+        <version>1.7.24</version>
         <type>jar</type>
       </dependency>
       
