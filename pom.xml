@@ -17,6 +17,7 @@
 
   <name>MicroBean Configuration for CDI</name>
   <description>${project.name}</description>
+  <url>https://ljnelson.github.io/${project.artifactId}</url>
 
   <scm>
     <connection>scm:git:git@github.com:ljnelson/${project.artifactId}.git</connection>
