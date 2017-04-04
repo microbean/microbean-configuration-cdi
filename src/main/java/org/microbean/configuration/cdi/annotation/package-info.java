@@ -19,7 +19,7 @@
  * Provides annotation classes and interfaces for helping to integrate
  * the MicroBean Configuration framework into CDI.
  *
- * @author <a href="http://about.me/lairdnelson"
+ * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
  */
 package org.microbean.configuration.cdi.annotation;

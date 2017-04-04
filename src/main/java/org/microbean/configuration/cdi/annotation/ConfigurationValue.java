@@ -16,64 +16,292 @@
  */
 package org.microbean.configuration.cdi.annotation;
 
+import java.io.Serializable; // for javadoc only
+
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-
 import javax.enterprise.util.AnnotationLiteral;
 import javax.enterprise.util.Nonbinding;
 
 import javax.inject.Qualifier;
 
+/**
+ * A {@link Qualifier} annotation indicating that the annotated
+ * element is related to a particular configuration value in some way.
+ *
+ * <p>In the case of method parameters and instance fields, this
+ * usually means that the annotated element would like to receive a
+ * particular configuration value from the MicroBean Configurations
+ * framework.</p>
+ *
+ * @author <a href="https://about.me/lairdnelson"
+ * target="_parent">Laird Nelson</a>
+ *
+ * @see ConfigurationCoordinate
+ *
+ * @see Configuration
+ */
 @Documented
 @Qualifier
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER, ElementType.TYPE })
 public @interface ConfigurationValue {
 
+
+  /*
+   * Static fields.
+   */
+
+
+  /**
+   * A {@link String} that stands in for {@code null}&mdash;annotation
+   * elements cannot be set to {@code null} so if either the {@link
+   * #value()} or {@link #defaultValue()} elements in this class
+   * return the value of this field it is to be interpreted as if it
+   * were actually {@code null}.
+   *
+   * @see #value()
+   *
+   * @see #defaultValue()
+   */
   public static final String NULL = "\0";
-  
+
+
+  /*
+   * Elements.
+   */
+
+
+  /**
+   * The name of the configuration value in question.
+   *
+   * <p>If this element is not specified, the effective configuration
+   * value name will be the name of the annotated element upon which this
+   * {@link ConfigurationValue} appears.</p>
+   *
+   * <p>This element will never return {@link #NULL NULL}.</p>
+   *
+   * @return the name of the configuration value in question; never
+   * {@code null} or {@link ConfigurationValue#NULL NULL}
+   *
+   * @see #NULL
+   */
   @Nonbinding
   String value() default "";
 
+  /**
+   * The {@link String} representation of the default value to use in
+   * case no suitable configuration value may be found.
+   *
+   * <p>This element may return {@link #NULL NULL}.</p>
+   *
+   * @return the {@link String} representation of the default value to
+   * use in case no suitable configuration value may be found, or
+   * {@link #NULL NULL}
+   *
+   * @see #NULL
+   */
   @Nonbinding
   String defaultValue() default NULL;
 
+
+  /*
+   * Inner and nested classes.
+   */
+  
+
+  /**
+   * An {@link AnnotationLiteral} representing a runtime instance of
+   * the {@link ConfigurationValue} annotation.
+   *
+   * @author <a href="https://about.me/lairdnelson"
+   * target="_parent">Laird Nelson</a>
+   */
   public static final class Literal extends AnnotationLiteral<ConfigurationValue> implements ConfigurationValue {
 
-    public static final ConfigurationValue INSTANCE = of("");
-    
-    private static final long serialVersionUID = 1L;
-    
-    private final String value;
 
+    /*
+     * Static fields.
+     */
+    
+
+    /**
+     * A {@link ConfigurationValue} whose {@link
+     * ConfigurationValue#value()} returns the empty string.
+     *
+     * @deprecated This {@link ConfigurationValue} is essentially
+     * useless and is slated for removal.
+     */
+    @Deprecated
+    public static final ConfigurationValue INSTANCE = of("");
+
+    /**
+     * The version of this class for {@linkplain Serializable
+     * serialization purposes}.
+     *
+     * @see Serializable
+     */
+    private static final long serialVersionUID = 1L;
+
+
+    /*
+     * Instance fields.
+     */
+
+
+    /**
+     * The name of the configuration value in question.
+     *
+     * <p>This field will never be {@code null} or {@link
+     * ConfigurationValue#NULL NULL}.</p>
+     *
+     * @see #value()
+     */
+    private final String name;
+
+    /**
+     * The {@link String} representation of the default value to use
+     * for the configuration value in question if no suitable
+     * configuration value could be found.
+     *
+     * <p>This field will never be {@code null} but may be {@link
+     * ConfigurationValue#NULL NULL}.</p>
+     *
+     * @see #defaultValue()
+     *
+     * @see ConfigurationValue#NULL
+     */
     private final String defaultValue;
 
-    private Literal(final String value, final String defaultValue) {
+
+    /*
+     * Constructors.
+     */
+
+
+    /**
+     * Creates a new {@link ConfigurationValue.Literal}.
+     *
+     * @param name the name of the configuration value; may be {@code
+     * null} or {@link ConfigurationValue#NULL NULL} in which case
+     * {@code ""} will be used instead
+     *
+     * @param defaultValue the {@link String} representation of the
+     * default value to use when a suitable configuration value cannot
+     * be found; may be {@code null} in which case {@link
+     * ConfigurationValue#NULL NULL} will be used instead
+     *
+     * @see #value()
+     *
+     * @see #defaultValue()
+     */
+    private Literal(final String name, final String defaultValue) {
       super();
-      this.value = value == null ? "" : value;
+      this.name = name == null ? "" : NULL.equals(name) ? "" : name;
       this.defaultValue = defaultValue == null ? NULL : defaultValue;
     }
 
+
+    /*
+     * Instance methods.
+     */
+
+    
+    /**
+     * Returns the {@link String} representation of the default value to use
+     * for the configuration value in question if no suitable
+     * configuration value could be found.
+     *
+     * <p>This method will never return {@code null} but may return
+     * {@link ConfigurationValue#NULL NULL}.</p>
+     *
+     * @return the {@link String} representation of the default value to use
+     * for the configuration value in question if no suitable
+     * configuration value could be found; never {@code null}
+     * 
+     * @see ConfigurationValue#defaultValue()
+     *
+     * @see ConfigurationValue#NULL
+     */
     @Override
     public final String defaultValue() {
       return this.defaultValue;
     }
-    
+
+    /**
+     * Returns the name of the configuration value in question.
+     *
+     * <p>This field will never return {@code null} or {@link
+     * ConfigurationValue#NULL NULL}.</p>
+     *
+     * @return the name of the configuration value in question; never
+     * {@code null}
+     *
+     * @see ConfigurationValue#value()
+     *
+     * @see ConfigurationValue#NULL
+     */
     @Override
     public final String value() {
-      return this.value;
+      return this.name;
     }
 
-    public static final Literal of(final String value) {
-      return new Literal(value, NULL);
+
+    /*
+     * Static methods.
+     */
+
+
+    /**
+     * Returns a new {@link Literal} representing a {@link
+     * ConfigurationValue} instance whose {@link
+     * ConfigurationValue#value()} method will return the supplied
+     * {@code name}.
+     *
+     * <p>This method never returns {@code null}.</p>
+     *
+     * @param name the name of the configuration value in question;
+     * may be {@code null} or {@link ConfigurationValue#NULL NULL} in
+     * which case {@code ""} will be used instead
+     *
+     * @return a non-{@code null} {@link Literal}
+     *
+     * @see ConfigurationValue#value()
+     */
+    public static final Literal of(final String name) {
+      return new Literal(name, NULL);
     }
 
-    public static final Literal of(final String value, final String defaultValue) {
-      return new Literal(value, defaultValue);
+    /**
+     * Returns a new {@link Literal} representing a {@link
+     * ConfigurationValue} instance whose {@link
+     * ConfigurationValue#value()} method will return the supplied
+     * {@code name} and whose {@link
+     * ConfigurationValue#defaultValue()} method will return the
+     * supplied {@code defaultValue}.
+     *
+     * <p>This method never returns {@code null}.</p>
+     *
+     * @param name the name of the configuration value in question;
+     * may be {@code null} or {@link ConfigurationValue#NULL NULL} in
+     * which case {@code ""} will be used instead
+     *
+     * @param defaultValue the default value for the configuration
+     * value in question; may be {@code null} in which case {@link
+     * ConfigurationValue#NULL NULL} will be used instead
+     *
+     * @return a non-{@code null} {@link Literal}
+     *
+     * @see ConfigurationValue#value()
+     *
+     * @see ConfigurationValue#defaultValue()
+     */
+    public static final Literal of(final String name, final String defaultValue) {
+      return new Literal(name, defaultValue);
     }
     
   }

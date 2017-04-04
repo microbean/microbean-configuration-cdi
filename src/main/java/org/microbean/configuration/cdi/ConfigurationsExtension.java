@@ -71,7 +71,7 @@ import org.microbean.configuration.cdi.annotation.ConfigurationValue;
  * An {@link Extension} that adapts the configuration ecosystem
  * exposed by the {@link Configurations} class to CDI constructs.
  *
- * @author <a href="http://about.me/lairdnelson"
+ * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
  *
  * @see Configurations

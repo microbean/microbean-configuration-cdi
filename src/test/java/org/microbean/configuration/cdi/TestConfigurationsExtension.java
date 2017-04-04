@@ -63,7 +63,11 @@ public class TestConfigurationsExtension {
    * Instance methods.
    */
 
-  private final void onStartup(@Observes @Initialized(ApplicationScoped.class) final Object event, @ConfigurationValue("home") @ConfigurationCoordinate(name = "a", value = "b") @ConfigurationCoordinate(name = "c", value = "d") final String javaHome) {
+  private final void onStartup(@Observes @Initialized(ApplicationScoped.class) final Object event,
+                               @ConfigurationValue("home")
+                               @ConfigurationCoordinate(name = "a", value = "b")
+                               @ConfigurationCoordinate(name = "c", value = "d")
+                               final String javaHome) {
     assertEquals(System.getProperty("java.home"), javaHome);
   }
   
