@@ -362,10 +362,12 @@ public class ConfigurationsExtension implements Extension {
           if (qualifier instanceof ConfigurationValue) {
             if (name == null) {
               final ConfigurationValue configurationValue = (ConfigurationValue)qualifier;
-              defaultValue = configurationValue.defaultValue().trim();
-              assert defaultValue != null;
-              if (defaultValue.equals(ConfigurationValue.NULL)) {
+              defaultValue = configurationValue.defaultValue();
+              if (defaultValue == null || defaultValue.equals(ConfigurationValue.NULL)) {
                 defaultValue = null;
+              } else {
+                defaultValue = configurationValue.defaultValue().trim();
+                assert defaultValue != null;
               }
               Annotated annotated = injectionPoint.getAnnotated();
               assert annotated != null;
