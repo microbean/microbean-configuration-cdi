@@ -358,410 +358,530 @@
 <span class="sourceLineNo">350</span>   */<a name="line.350"></a>
 <span class="sourceLineNo">351</span><a name="line.351"></a>
 <span class="sourceLineNo">352</span><a name="line.352"></a>
-<span class="sourceLineNo">353</span>  private static final ConfigurationValueMetadata getMetadata(final InjectionPoint injectionPoint) {<a name="line.353"></a>
-<span class="sourceLineNo">354</span>    ConfigurationValueMetadata returnValue = null;<a name="line.354"></a>
-<span class="sourceLineNo">355</span>    if (injectionPoint != null) {<a name="line.355"></a>
-<span class="sourceLineNo">356</span>      final Set&lt;Annotation&gt; qualifiers = injectionPoint.getQualifiers();<a name="line.356"></a>
-<span class="sourceLineNo">357</span>      if (qualifiers != null &amp;&amp; !qualifiers.isEmpty()) {<a name="line.357"></a>
-<span class="sourceLineNo">358</span>        Map&lt;String, String&gt; configurationCoordinates = null;<a name="line.358"></a>
-<span class="sourceLineNo">359</span>        String name = null;<a name="line.359"></a>
-<span class="sourceLineNo">360</span>        String defaultValue = null;<a name="line.360"></a>
-<span class="sourceLineNo">361</span>        for (final Annotation qualifier : qualifiers) {<a name="line.361"></a>
-<span class="sourceLineNo">362</span>          if (qualifier instanceof ConfigurationValue) {<a name="line.362"></a>
-<span class="sourceLineNo">363</span>            if (name == null) {<a name="line.363"></a>
-<span class="sourceLineNo">364</span>              final ConfigurationValue configurationValue = (ConfigurationValue)qualifier;<a name="line.364"></a>
-<span class="sourceLineNo">365</span>              defaultValue = configurationValue.defaultValue();<a name="line.365"></a>
-<span class="sourceLineNo">366</span>              if (defaultValue == null || defaultValue.equals(ConfigurationValue.NULL)) {<a name="line.366"></a>
-<span class="sourceLineNo">367</span>                defaultValue = null;<a name="line.367"></a>
-<span class="sourceLineNo">368</span>              } else {<a name="line.368"></a>
-<span class="sourceLineNo">369</span>                defaultValue = configurationValue.defaultValue().trim();<a name="line.369"></a>
-<span class="sourceLineNo">370</span>                assert defaultValue != null;<a name="line.370"></a>
-<span class="sourceLineNo">371</span>              }<a name="line.371"></a>
-<span class="sourceLineNo">372</span>              Annotated annotated = injectionPoint.getAnnotated();<a name="line.372"></a>
-<span class="sourceLineNo">373</span>              assert annotated != null;<a name="line.373"></a>
-<span class="sourceLineNo">374</span>              name = configurationValue.value().trim();<a name="line.374"></a>
-<span class="sourceLineNo">375</span>              assert name != null;<a name="line.375"></a>
-<span class="sourceLineNo">376</span>              if (name.isEmpty()) {<a name="line.376"></a>
-<span class="sourceLineNo">377</span>                // Try to get it from the annotated element<a name="line.377"></a>
-<span class="sourceLineNo">378</span>                if (annotated instanceof AnnotatedField) {<a name="line.378"></a>
-<span class="sourceLineNo">379</span>                  final Member field = ((AnnotatedField)annotated).getJavaMember();<a name="line.379"></a>
-<span class="sourceLineNo">380</span>                  assert field != null;<a name="line.380"></a>
-<span class="sourceLineNo">381</span>                  name = field.getName();<a name="line.381"></a>
-<span class="sourceLineNo">382</span>                } else if (annotated instanceof AnnotatedParameter) {<a name="line.382"></a>
-<span class="sourceLineNo">383</span>                  final AnnotatedParameter&lt;?&gt; annotatedParameter = (AnnotatedParameter&lt;?&gt;)annotated;<a name="line.383"></a>
-<span class="sourceLineNo">384</span>                  <a name="line.384"></a>
-<span class="sourceLineNo">385</span>                  final AnnotatedMember&lt;?&gt; annotatedMember = annotatedParameter.getDeclaringCallable();<a name="line.385"></a>
-<span class="sourceLineNo">386</span>                  assert annotatedMember != null;<a name="line.386"></a>
-<span class="sourceLineNo">387</span>                  <a name="line.387"></a>
-<span class="sourceLineNo">388</span>                  final Member member = annotatedMember.getJavaMember();<a name="line.388"></a>
-<span class="sourceLineNo">389</span>                  assert member != null;<a name="line.389"></a>
-<span class="sourceLineNo">390</span>                  assert member instanceof Executable;<a name="line.390"></a>
-<span class="sourceLineNo">391</span>                  <a name="line.391"></a>
-<span class="sourceLineNo">392</span>                  final int parameterIndex = annotatedParameter.getPosition();<a name="line.392"></a>
-<span class="sourceLineNo">393</span>                  assert parameterIndex &gt;= 0;<a name="line.393"></a>
+<span class="sourceLineNo">353</span>  /**<a name="line.353"></a>
+<span class="sourceLineNo">354</span>   * Returns a {@link ConfigurationValueMetadata} object representing<a name="line.354"></a>
+<span class="sourceLineNo">355</span>   * all the configuration-value-related metadata available on the<a name="line.355"></a>
+<span class="sourceLineNo">356</span>   * supplied {@link InjectionPoint}.<a name="line.356"></a>
+<span class="sourceLineNo">357</span>   *<a name="line.357"></a>
+<span class="sourceLineNo">358</span>   * @param injectionPoint the {@link InjectionPoint} to consider; may<a name="line.358"></a>
+<span class="sourceLineNo">359</span>   * be {@code null} in which case {@code null} will be returned<a name="line.359"></a>
+<span class="sourceLineNo">360</span>   *<a name="line.360"></a>
+<span class="sourceLineNo">361</span>   * @return a {@link ConfigurationValueMetadata} object, or {@code null}<a name="line.361"></a>
+<span class="sourceLineNo">362</span>   */<a name="line.362"></a>
+<span class="sourceLineNo">363</span>  private static final ConfigurationValueMetadata getMetadata(final InjectionPoint injectionPoint) {<a name="line.363"></a>
+<span class="sourceLineNo">364</span>    ConfigurationValueMetadata returnValue = null;<a name="line.364"></a>
+<span class="sourceLineNo">365</span>    if (injectionPoint != null) {<a name="line.365"></a>
+<span class="sourceLineNo">366</span>      final Set&lt;Annotation&gt; qualifiers = injectionPoint.getQualifiers();<a name="line.366"></a>
+<span class="sourceLineNo">367</span>      if (qualifiers != null &amp;&amp; !qualifiers.isEmpty()) {<a name="line.367"></a>
+<span class="sourceLineNo">368</span>        Map&lt;String, String&gt; configurationCoordinates = null;<a name="line.368"></a>
+<span class="sourceLineNo">369</span>        String name = null;<a name="line.369"></a>
+<span class="sourceLineNo">370</span>        String defaultValue = null;<a name="line.370"></a>
+<span class="sourceLineNo">371</span>        for (final Annotation qualifier : qualifiers) {<a name="line.371"></a>
+<span class="sourceLineNo">372</span>          if (qualifier instanceof ConfigurationValue) {<a name="line.372"></a>
+<span class="sourceLineNo">373</span>            if (name == null) {<a name="line.373"></a>
+<span class="sourceLineNo">374</span>              final ConfigurationValue configurationValue = (ConfigurationValue)qualifier;<a name="line.374"></a>
+<span class="sourceLineNo">375</span>              defaultValue = configurationValue.defaultValue();<a name="line.375"></a>
+<span class="sourceLineNo">376</span>              if (defaultValue == null || defaultValue.equals(ConfigurationValue.NULL)) {<a name="line.376"></a>
+<span class="sourceLineNo">377</span>                defaultValue = null;<a name="line.377"></a>
+<span class="sourceLineNo">378</span>              } else {<a name="line.378"></a>
+<span class="sourceLineNo">379</span>                defaultValue = configurationValue.defaultValue().trim();<a name="line.379"></a>
+<span class="sourceLineNo">380</span>                assert defaultValue != null;<a name="line.380"></a>
+<span class="sourceLineNo">381</span>              }<a name="line.381"></a>
+<span class="sourceLineNo">382</span>              Annotated annotated = injectionPoint.getAnnotated();<a name="line.382"></a>
+<span class="sourceLineNo">383</span>              assert annotated != null;<a name="line.383"></a>
+<span class="sourceLineNo">384</span>              name = configurationValue.value().trim();<a name="line.384"></a>
+<span class="sourceLineNo">385</span>              assert name != null;<a name="line.385"></a>
+<span class="sourceLineNo">386</span>              if (name.isEmpty()) {<a name="line.386"></a>
+<span class="sourceLineNo">387</span>                // Try to get it from the annotated element<a name="line.387"></a>
+<span class="sourceLineNo">388</span>                if (annotated instanceof AnnotatedField) {<a name="line.388"></a>
+<span class="sourceLineNo">389</span>                  final Member field = ((AnnotatedField)annotated).getJavaMember();<a name="line.389"></a>
+<span class="sourceLineNo">390</span>                  assert field != null;<a name="line.390"></a>
+<span class="sourceLineNo">391</span>                  name = field.getName();<a name="line.391"></a>
+<span class="sourceLineNo">392</span>                } else if (annotated instanceof AnnotatedParameter) {<a name="line.392"></a>
+<span class="sourceLineNo">393</span>                  final AnnotatedParameter&lt;?&gt; annotatedParameter = (AnnotatedParameter&lt;?&gt;)annotated;<a name="line.393"></a>
 <span class="sourceLineNo">394</span>                  <a name="line.394"></a>
-<span class="sourceLineNo">395</span>                  final Parameter[] parameters = ((Executable)member).getParameters();<a name="line.395"></a>
-<span class="sourceLineNo">396</span>                  assert parameters != null;<a name="line.396"></a>
-<span class="sourceLineNo">397</span>                  assert parameters.length &gt;= parameterIndex;<a name="line.397"></a>
-<span class="sourceLineNo">398</span>                  <a name="line.398"></a>
-<span class="sourceLineNo">399</span>                  final Parameter parameter = parameters[parameterIndex];<a name="line.399"></a>
-<span class="sourceLineNo">400</span>                  assert parameter != null;<a name="line.400"></a>
+<span class="sourceLineNo">395</span>                  final AnnotatedMember&lt;?&gt; annotatedMember = annotatedParameter.getDeclaringCallable();<a name="line.395"></a>
+<span class="sourceLineNo">396</span>                  assert annotatedMember != null;<a name="line.396"></a>
+<span class="sourceLineNo">397</span>                  <a name="line.397"></a>
+<span class="sourceLineNo">398</span>                  final Member member = annotatedMember.getJavaMember();<a name="line.398"></a>
+<span class="sourceLineNo">399</span>                  assert member != null;<a name="line.399"></a>
+<span class="sourceLineNo">400</span>                  assert member instanceof Executable;<a name="line.400"></a>
 <span class="sourceLineNo">401</span>                  <a name="line.401"></a>
-<span class="sourceLineNo">402</span>                  if (parameter.isNamePresent()) {<a name="line.402"></a>
-<span class="sourceLineNo">403</span>                    name = parameter.getName();<a name="line.403"></a>
-<span class="sourceLineNo">404</span>                  } else {<a name="line.404"></a>
-<span class="sourceLineNo">405</span>                    throw new IllegalStateException("The parameter at index " +<a name="line.405"></a>
-<span class="sourceLineNo">406</span>                                                    parameterIndex +<a name="line.406"></a>
-<span class="sourceLineNo">407</span>                                                    " in " +<a name="line.407"></a>
-<span class="sourceLineNo">408</span>                                                    member +<a name="line.408"></a>
-<span class="sourceLineNo">409</span>                                                    " did not have a name available via reflection. " +<a name="line.409"></a>
-<span class="sourceLineNo">410</span>                                                    "Make sure you compiled its enclosing class, " +<a name="line.410"></a>
-<span class="sourceLineNo">411</span>                                                    member.getDeclaringClass().getName() +<a name="line.411"></a>
-<span class="sourceLineNo">412</span>                                                    ", with the -parameters option supplied to javac, " +<a name="line.412"></a>
-<span class="sourceLineNo">413</span>                                                    " or make use of the value() element of the " +<a name="line.413"></a>
-<span class="sourceLineNo">414</span>                                                    ConfigurationValue.class.getName() +<a name="line.414"></a>
-<span class="sourceLineNo">415</span>                                                    " annotation.");<a name="line.415"></a>
-<span class="sourceLineNo">416</span>                  }<a name="line.416"></a>
-<span class="sourceLineNo">417</span>                } else {<a name="line.417"></a>
-<span class="sourceLineNo">418</span>                  name = null;<a name="line.418"></a>
-<span class="sourceLineNo">419</span>                }<a name="line.419"></a>
-<span class="sourceLineNo">420</span>              }<a name="line.420"></a>
-<span class="sourceLineNo">421</span>              if (name != null) {<a name="line.421"></a>
-<span class="sourceLineNo">422</span>                // See if the InjectionPoint is "inside" a "context" with<a name="line.422"></a>
-<span class="sourceLineNo">423</span>                // a @Configuration annotation; that will define our<a name="line.423"></a>
-<span class="sourceLineNo">424</span>                // prefix if so<a name="line.424"></a>
-<span class="sourceLineNo">425</span>                assert annotated != null;<a name="line.425"></a>
-<span class="sourceLineNo">426</span>                Configuration configuration = null;<a name="line.426"></a>
-<span class="sourceLineNo">427</span>                while (configuration == null) {<a name="line.427"></a>
-<span class="sourceLineNo">428</span>                  configuration = annotated.getAnnotation(Configuration.class);              <a name="line.428"></a>
-<span class="sourceLineNo">429</span>                  if (configuration == null) {<a name="line.429"></a>
-<span class="sourceLineNo">430</span>                    if (annotated instanceof AnnotatedParameter) {<a name="line.430"></a>
-<span class="sourceLineNo">431</span>                      annotated = ((AnnotatedParameter)annotated).getDeclaringCallable();<a name="line.431"></a>
-<span class="sourceLineNo">432</span>                    } else if (annotated instanceof AnnotatedMember) {<a name="line.432"></a>
-<span class="sourceLineNo">433</span>                      annotated = ((AnnotatedMember)annotated).getDeclaringType();<a name="line.433"></a>
-<span class="sourceLineNo">434</span>                    } else if (annotated instanceof AnnotatedType) {<a name="line.434"></a>
-<span class="sourceLineNo">435</span>                      break;<a name="line.435"></a>
-<span class="sourceLineNo">436</span>                    } else {<a name="line.436"></a>
-<span class="sourceLineNo">437</span>                      assert false : "Unexpected annotated: " + annotated;<a name="line.437"></a>
-<span class="sourceLineNo">438</span>                    }<a name="line.438"></a>
-<span class="sourceLineNo">439</span>                  } else {<a name="line.439"></a>
-<span class="sourceLineNo">440</span>                    final String prefix = configuration.value().trim(); // TODO: trim?<a name="line.440"></a>
-<span class="sourceLineNo">441</span>                    assert prefix != null;<a name="line.441"></a>
-<span class="sourceLineNo">442</span>                    if (!prefix.isEmpty()) {<a name="line.442"></a>
-<span class="sourceLineNo">443</span>                      name = new StringBuilder(prefix).append(".").append(name).toString();<a name="line.443"></a>
-<span class="sourceLineNo">444</span>                    }<a name="line.444"></a>
-<span class="sourceLineNo">445</span>                  }<a name="line.445"></a>
-<span class="sourceLineNo">446</span>                }<a name="line.446"></a>
-<span class="sourceLineNo">447</span>              }              <a name="line.447"></a>
-<span class="sourceLineNo">448</span>            }<a name="line.448"></a>
-<span class="sourceLineNo">449</span>          } else if (qualifier instanceof ConfigurationCoordinates) {<a name="line.449"></a>
-<span class="sourceLineNo">450</span>            if (configurationCoordinates == null) {<a name="line.450"></a>
-<span class="sourceLineNo">451</span>              final ConfigurationCoordinates configurationCoordinatesAnnotation = (ConfigurationCoordinates)qualifier;<a name="line.451"></a>
-<span class="sourceLineNo">452</span>              final ConfigurationCoordinate[] coordinateArray = configurationCoordinatesAnnotation.value();<a name="line.452"></a>
-<span class="sourceLineNo">453</span>              assert coordinateArray != null;<a name="line.453"></a>
-<span class="sourceLineNo">454</span>              if (coordinateArray.length &gt; 0) {<a name="line.454"></a>
-<span class="sourceLineNo">455</span>                configurationCoordinates = new HashMap&lt;&gt;();<a name="line.455"></a>
-<span class="sourceLineNo">456</span>                for (final ConfigurationCoordinate coordinate : coordinateArray) {<a name="line.456"></a>
-<span class="sourceLineNo">457</span>                  assert coordinate != null;<a name="line.457"></a>
-<span class="sourceLineNo">458</span>                  final String coordinateName = coordinate.name();<a name="line.458"></a>
-<span class="sourceLineNo">459</span>                  assert coordinateName != null;<a name="line.459"></a>
-<span class="sourceLineNo">460</span>                  final String coordinateValue = coordinate.value();<a name="line.460"></a>
-<span class="sourceLineNo">461</span>                  assert coordinateValue != null;<a name="line.461"></a>
-<span class="sourceLineNo">462</span>                  configurationCoordinates.put(coordinateName, coordinateValue);<a name="line.462"></a>
-<span class="sourceLineNo">463</span>                }<a name="line.463"></a>
-<span class="sourceLineNo">464</span>              }<a name="line.464"></a>
-<span class="sourceLineNo">465</span>            }<a name="line.465"></a>
-<span class="sourceLineNo">466</span>          }<a name="line.466"></a>
-<span class="sourceLineNo">467</span>        }<a name="line.467"></a>
-<span class="sourceLineNo">468</span>        returnValue = new ConfigurationValueMetadata(configurationCoordinates, name, defaultValue);<a name="line.468"></a>
-<span class="sourceLineNo">469</span>      }<a name="line.469"></a>
-<span class="sourceLineNo">470</span>    }<a name="line.470"></a>
-<span class="sourceLineNo">471</span>    return returnValue;<a name="line.471"></a>
-<span class="sourceLineNo">472</span>  }<a name="line.472"></a>
-<span class="sourceLineNo">473</span>  <a name="line.473"></a>
-<span class="sourceLineNo">474</span><a name="line.474"></a>
-<span class="sourceLineNo">475</span>  /*<a name="line.475"></a>
-<span class="sourceLineNo">476</span>   * Inner and nested classes.<a name="line.476"></a>
-<span class="sourceLineNo">477</span>   */<a name="line.477"></a>
-<span class="sourceLineNo">478</span><a name="line.478"></a>
-<span class="sourceLineNo">479</span><a name="line.479"></a>
-<span class="sourceLineNo">480</span>  private static final class ConfigurationValueMetadata {<a name="line.480"></a>
-<span class="sourceLineNo">481</span><a name="line.481"></a>
-<span class="sourceLineNo">482</span>    private final Map&lt;String, String&gt; configurationCoordinates;<a name="line.482"></a>
-<span class="sourceLineNo">483</span><a name="line.483"></a>
-<span class="sourceLineNo">484</span>    private final String name;<a name="line.484"></a>
-<span class="sourceLineNo">485</span><a name="line.485"></a>
-<span class="sourceLineNo">486</span>    private final String defaultValue;<a name="line.486"></a>
-<span class="sourceLineNo">487</span>    <a name="line.487"></a>
-<span class="sourceLineNo">488</span>    private ConfigurationValueMetadata(final Map&lt;String, String&gt; configurationCoordinates,<a name="line.488"></a>
-<span class="sourceLineNo">489</span>                                                     final String name,<a name="line.489"></a>
-<span class="sourceLineNo">490</span>                                                     final String defaultValue) {<a name="line.490"></a>
-<span class="sourceLineNo">491</span>      super();<a name="line.491"></a>
-<span class="sourceLineNo">492</span>      Objects.requireNonNull(name);<a name="line.492"></a>
-<span class="sourceLineNo">493</span>      if (configurationCoordinates == null || configurationCoordinates.isEmpty()) {<a name="line.493"></a>
-<span class="sourceLineNo">494</span>        this.configurationCoordinates = Collections.emptyMap();<a name="line.494"></a>
-<span class="sourceLineNo">495</span>      } else {<a name="line.495"></a>
-<span class="sourceLineNo">496</span>        this.configurationCoordinates = Collections.unmodifiableMap(configurationCoordinates);<a name="line.496"></a>
-<span class="sourceLineNo">497</span>      }<a name="line.497"></a>
-<span class="sourceLineNo">498</span>      this.name = name;<a name="line.498"></a>
-<span class="sourceLineNo">499</span>      if (defaultValue == null || defaultValue.equals(ConfigurationValue.NULL)) {<a name="line.499"></a>
-<span class="sourceLineNo">500</span>        this.defaultValue = null;<a name="line.500"></a>
-<span class="sourceLineNo">501</span>      } else {<a name="line.501"></a>
-<span class="sourceLineNo">502</span>        this.defaultValue = defaultValue;<a name="line.502"></a>
-<span class="sourceLineNo">503</span>      }<a name="line.503"></a>
-<span class="sourceLineNo">504</span>    }<a name="line.504"></a>
+<span class="sourceLineNo">402</span>                  final int parameterIndex = annotatedParameter.getPosition();<a name="line.402"></a>
+<span class="sourceLineNo">403</span>                  assert parameterIndex &gt;= 0;<a name="line.403"></a>
+<span class="sourceLineNo">404</span>                  <a name="line.404"></a>
+<span class="sourceLineNo">405</span>                  final Parameter[] parameters = ((Executable)member).getParameters();<a name="line.405"></a>
+<span class="sourceLineNo">406</span>                  assert parameters != null;<a name="line.406"></a>
+<span class="sourceLineNo">407</span>                  assert parameters.length &gt;= parameterIndex;<a name="line.407"></a>
+<span class="sourceLineNo">408</span>                  <a name="line.408"></a>
+<span class="sourceLineNo">409</span>                  final Parameter parameter = parameters[parameterIndex];<a name="line.409"></a>
+<span class="sourceLineNo">410</span>                  assert parameter != null;<a name="line.410"></a>
+<span class="sourceLineNo">411</span>                  <a name="line.411"></a>
+<span class="sourceLineNo">412</span>                  if (parameter.isNamePresent()) {<a name="line.412"></a>
+<span class="sourceLineNo">413</span>                    name = parameter.getName();<a name="line.413"></a>
+<span class="sourceLineNo">414</span>                  } else {<a name="line.414"></a>
+<span class="sourceLineNo">415</span>                    throw new IllegalStateException("The parameter at index " +<a name="line.415"></a>
+<span class="sourceLineNo">416</span>                                                    parameterIndex +<a name="line.416"></a>
+<span class="sourceLineNo">417</span>                                                    " in " +<a name="line.417"></a>
+<span class="sourceLineNo">418</span>                                                    member +<a name="line.418"></a>
+<span class="sourceLineNo">419</span>                                                    " did not have a name available via reflection. " +<a name="line.419"></a>
+<span class="sourceLineNo">420</span>                                                    "Make sure you compiled its enclosing class, " +<a name="line.420"></a>
+<span class="sourceLineNo">421</span>                                                    member.getDeclaringClass().getName() +<a name="line.421"></a>
+<span class="sourceLineNo">422</span>                                                    ", with the -parameters option supplied to javac, " +<a name="line.422"></a>
+<span class="sourceLineNo">423</span>                                                    " or make use of the value() element of the " +<a name="line.423"></a>
+<span class="sourceLineNo">424</span>                                                    ConfigurationValue.class.getName() +<a name="line.424"></a>
+<span class="sourceLineNo">425</span>                                                    " annotation.");<a name="line.425"></a>
+<span class="sourceLineNo">426</span>                  }<a name="line.426"></a>
+<span class="sourceLineNo">427</span>                } else {<a name="line.427"></a>
+<span class="sourceLineNo">428</span>                  name = null;<a name="line.428"></a>
+<span class="sourceLineNo">429</span>                }<a name="line.429"></a>
+<span class="sourceLineNo">430</span>              }<a name="line.430"></a>
+<span class="sourceLineNo">431</span>              if (name != null) {<a name="line.431"></a>
+<span class="sourceLineNo">432</span>                // See if the InjectionPoint is "inside" a "context" with<a name="line.432"></a>
+<span class="sourceLineNo">433</span>                // a @Configuration annotation; that will define our<a name="line.433"></a>
+<span class="sourceLineNo">434</span>                // prefix if so<a name="line.434"></a>
+<span class="sourceLineNo">435</span>                assert annotated != null;<a name="line.435"></a>
+<span class="sourceLineNo">436</span>                Configuration configuration = null;<a name="line.436"></a>
+<span class="sourceLineNo">437</span>                while (configuration == null) {<a name="line.437"></a>
+<span class="sourceLineNo">438</span>                  configuration = annotated.getAnnotation(Configuration.class);              <a name="line.438"></a>
+<span class="sourceLineNo">439</span>                  if (configuration == null) {<a name="line.439"></a>
+<span class="sourceLineNo">440</span>                    if (annotated instanceof AnnotatedParameter) {<a name="line.440"></a>
+<span class="sourceLineNo">441</span>                      annotated = ((AnnotatedParameter)annotated).getDeclaringCallable();<a name="line.441"></a>
+<span class="sourceLineNo">442</span>                    } else if (annotated instanceof AnnotatedMember) {<a name="line.442"></a>
+<span class="sourceLineNo">443</span>                      annotated = ((AnnotatedMember)annotated).getDeclaringType();<a name="line.443"></a>
+<span class="sourceLineNo">444</span>                    } else if (annotated instanceof AnnotatedType) {<a name="line.444"></a>
+<span class="sourceLineNo">445</span>                      break;<a name="line.445"></a>
+<span class="sourceLineNo">446</span>                    } else {<a name="line.446"></a>
+<span class="sourceLineNo">447</span>                      assert false : "Unexpected annotated: " + annotated;<a name="line.447"></a>
+<span class="sourceLineNo">448</span>                    }<a name="line.448"></a>
+<span class="sourceLineNo">449</span>                  } else {<a name="line.449"></a>
+<span class="sourceLineNo">450</span>                    final String prefix = configuration.value().trim(); // TODO: trim?<a name="line.450"></a>
+<span class="sourceLineNo">451</span>                    assert prefix != null;<a name="line.451"></a>
+<span class="sourceLineNo">452</span>                    if (!prefix.isEmpty()) {<a name="line.452"></a>
+<span class="sourceLineNo">453</span>                      name = new StringBuilder(prefix).append(".").append(name).toString();<a name="line.453"></a>
+<span class="sourceLineNo">454</span>                    }<a name="line.454"></a>
+<span class="sourceLineNo">455</span>                  }<a name="line.455"></a>
+<span class="sourceLineNo">456</span>                }<a name="line.456"></a>
+<span class="sourceLineNo">457</span>              }              <a name="line.457"></a>
+<span class="sourceLineNo">458</span>            }<a name="line.458"></a>
+<span class="sourceLineNo">459</span>          } else if (qualifier instanceof ConfigurationCoordinates) {<a name="line.459"></a>
+<span class="sourceLineNo">460</span>            if (configurationCoordinates == null) {<a name="line.460"></a>
+<span class="sourceLineNo">461</span>              final ConfigurationCoordinates configurationCoordinatesAnnotation = (ConfigurationCoordinates)qualifier;<a name="line.461"></a>
+<span class="sourceLineNo">462</span>              final ConfigurationCoordinate[] coordinateArray = configurationCoordinatesAnnotation.value();<a name="line.462"></a>
+<span class="sourceLineNo">463</span>              assert coordinateArray != null;<a name="line.463"></a>
+<span class="sourceLineNo">464</span>              if (coordinateArray.length &gt; 0) {<a name="line.464"></a>
+<span class="sourceLineNo">465</span>                configurationCoordinates = new HashMap&lt;&gt;();<a name="line.465"></a>
+<span class="sourceLineNo">466</span>                for (final ConfigurationCoordinate coordinate : coordinateArray) {<a name="line.466"></a>
+<span class="sourceLineNo">467</span>                  assert coordinate != null;<a name="line.467"></a>
+<span class="sourceLineNo">468</span>                  final String coordinateName = coordinate.name();<a name="line.468"></a>
+<span class="sourceLineNo">469</span>                  assert coordinateName != null;<a name="line.469"></a>
+<span class="sourceLineNo">470</span>                  final String coordinateValue = coordinate.value();<a name="line.470"></a>
+<span class="sourceLineNo">471</span>                  assert coordinateValue != null;<a name="line.471"></a>
+<span class="sourceLineNo">472</span>                  configurationCoordinates.put(coordinateName, coordinateValue);<a name="line.472"></a>
+<span class="sourceLineNo">473</span>                }<a name="line.473"></a>
+<span class="sourceLineNo">474</span>              }<a name="line.474"></a>
+<span class="sourceLineNo">475</span>            }<a name="line.475"></a>
+<span class="sourceLineNo">476</span>          }<a name="line.476"></a>
+<span class="sourceLineNo">477</span>        }<a name="line.477"></a>
+<span class="sourceLineNo">478</span>        returnValue = new ConfigurationValueMetadata(configurationCoordinates, name, defaultValue);<a name="line.478"></a>
+<span class="sourceLineNo">479</span>      }<a name="line.479"></a>
+<span class="sourceLineNo">480</span>    }<a name="line.480"></a>
+<span class="sourceLineNo">481</span>    return returnValue;<a name="line.481"></a>
+<span class="sourceLineNo">482</span>  }<a name="line.482"></a>
+<span class="sourceLineNo">483</span>  <a name="line.483"></a>
+<span class="sourceLineNo">484</span><a name="line.484"></a>
+<span class="sourceLineNo">485</span>  /*<a name="line.485"></a>
+<span class="sourceLineNo">486</span>   * Inner and nested classes.<a name="line.486"></a>
+<span class="sourceLineNo">487</span>   */<a name="line.487"></a>
+<span class="sourceLineNo">488</span><a name="line.488"></a>
+<span class="sourceLineNo">489</span><a name="line.489"></a>
+<span class="sourceLineNo">490</span>  /**<a name="line.490"></a>
+<span class="sourceLineNo">491</span>   * A value object containing metadata semantically associated with a<a name="line.491"></a>
+<span class="sourceLineNo">492</span>   * {@link ConfigurationValue} injection point.<a name="line.492"></a>
+<span class="sourceLineNo">493</span>   *<a name="line.493"></a>
+<span class="sourceLineNo">494</span>   * @author &lt;a href="https://about.me/lairdnelson"<a name="line.494"></a>
+<span class="sourceLineNo">495</span>   * target="_parent"&gt;Laird Nelson&lt;/a&gt;<a name="line.495"></a>
+<span class="sourceLineNo">496</span>   *<a name="line.496"></a>
+<span class="sourceLineNo">497</span>   * @see ConfigurationValue<a name="line.497"></a>
+<span class="sourceLineNo">498</span>   */<a name="line.498"></a>
+<span class="sourceLineNo">499</span>  private static final class ConfigurationValueMetadata {<a name="line.499"></a>
+<span class="sourceLineNo">500</span><a name="line.500"></a>
+<span class="sourceLineNo">501</span><a name="line.501"></a>
+<span class="sourceLineNo">502</span>    /*<a name="line.502"></a>
+<span class="sourceLineNo">503</span>     * Instance fields.<a name="line.503"></a>
+<span class="sourceLineNo">504</span>     */<a name="line.504"></a>
 <span class="sourceLineNo">505</span><a name="line.505"></a>
-<span class="sourceLineNo">506</span>    public final Map&lt;String, String&gt; getConfigurationCoordinates() {<a name="line.506"></a>
-<span class="sourceLineNo">507</span>      return this.configurationCoordinates;<a name="line.507"></a>
-<span class="sourceLineNo">508</span>    }<a name="line.508"></a>
-<span class="sourceLineNo">509</span><a name="line.509"></a>
-<span class="sourceLineNo">510</span>    public final String getName() {<a name="line.510"></a>
-<span class="sourceLineNo">511</span>      return this.name;<a name="line.511"></a>
-<span class="sourceLineNo">512</span>    }<a name="line.512"></a>
-<span class="sourceLineNo">513</span><a name="line.513"></a>
-<span class="sourceLineNo">514</span>    public final String getDefaultValue() {<a name="line.514"></a>
-<span class="sourceLineNo">515</span>      return this.defaultValue;<a name="line.515"></a>
-<span class="sourceLineNo">516</span>    }<a name="line.516"></a>
-<span class="sourceLineNo">517</span><a name="line.517"></a>
-<span class="sourceLineNo">518</span>    @Override<a name="line.518"></a>
-<span class="sourceLineNo">519</span>    public final int hashCode() {<a name="line.519"></a>
-<span class="sourceLineNo">520</span>      int hashCode = 17;<a name="line.520"></a>
-<span class="sourceLineNo">521</span><a name="line.521"></a>
-<span class="sourceLineNo">522</span>      final Object configurationCoordinates = this.getConfigurationCoordinates();<a name="line.522"></a>
-<span class="sourceLineNo">523</span>      int c = configurationCoordinates == null ? 0 : configurationCoordinates.hashCode();<a name="line.523"></a>
-<span class="sourceLineNo">524</span>      hashCode = 37 * hashCode + c;<a name="line.524"></a>
-<span class="sourceLineNo">525</span><a name="line.525"></a>
-<span class="sourceLineNo">526</span>      final Object name = this.getName();<a name="line.526"></a>
-<span class="sourceLineNo">527</span>      c = name == null ? 0 : name.hashCode();<a name="line.527"></a>
-<span class="sourceLineNo">528</span>      hashCode = 37 * hashCode + c;<a name="line.528"></a>
-<span class="sourceLineNo">529</span><a name="line.529"></a>
-<span class="sourceLineNo">530</span>      final Object defaultValue = this.getDefaultValue();<a name="line.530"></a>
-<span class="sourceLineNo">531</span>      c = defaultValue == null ? 0 : defaultValue.hashCode();<a name="line.531"></a>
-<span class="sourceLineNo">532</span>      hashCode = 37 * hashCode + c;<a name="line.532"></a>
+<span class="sourceLineNo">506</span><a name="line.506"></a>
+<span class="sourceLineNo">507</span>    /**<a name="line.507"></a>
+<span class="sourceLineNo">508</span>     * A {@link Map} of &lt;em&gt;configuration coordinates&lt;/em&gt; in effect.<a name="line.508"></a>
+<span class="sourceLineNo">509</span>     *<a name="line.509"></a>
+<span class="sourceLineNo">510</span>     * &lt;p&gt;This field is never {@code null}.&lt;/p&gt;<a name="line.510"></a>
+<span class="sourceLineNo">511</span>     *<a name="line.511"></a>
+<span class="sourceLineNo">512</span>     * @see #getConfigurationCoordinates()<a name="line.512"></a>
+<span class="sourceLineNo">513</span>     */<a name="line.513"></a>
+<span class="sourceLineNo">514</span>    private final Map&lt;String, String&gt; configurationCoordinates;<a name="line.514"></a>
+<span class="sourceLineNo">515</span><a name="line.515"></a>
+<span class="sourceLineNo">516</span>    /**<a name="line.516"></a>
+<span class="sourceLineNo">517</span>     * The name of the {@link ConfigurationValue}.<a name="line.517"></a>
+<span class="sourceLineNo">518</span>     *<a name="line.518"></a>
+<span class="sourceLineNo">519</span>     * &lt;p&gt;This field is never {@code null}.&lt;/p&gt;<a name="line.519"></a>
+<span class="sourceLineNo">520</span>     *<a name="line.520"></a>
+<span class="sourceLineNo">521</span>     * @see #getName()<a name="line.521"></a>
+<span class="sourceLineNo">522</span>     */<a name="line.522"></a>
+<span class="sourceLineNo">523</span>    private final String name;<a name="line.523"></a>
+<span class="sourceLineNo">524</span><a name="line.524"></a>
+<span class="sourceLineNo">525</span>    /**<a name="line.525"></a>
+<span class="sourceLineNo">526</span>     * The default value to use for the {@link ConfigurationValue}.<a name="line.526"></a>
+<span class="sourceLineNo">527</span>     *<a name="line.527"></a>
+<span class="sourceLineNo">528</span>     * &lt;p&gt;This field may be {@code null}.&lt;/p&gt;<a name="line.528"></a>
+<span class="sourceLineNo">529</span>     *<a name="line.529"></a>
+<span class="sourceLineNo">530</span>     * @see #getDefaultValue()<a name="line.530"></a>
+<span class="sourceLineNo">531</span>     */<a name="line.531"></a>
+<span class="sourceLineNo">532</span>    private final String defaultValue;<a name="line.532"></a>
 <span class="sourceLineNo">533</span><a name="line.533"></a>
-<span class="sourceLineNo">534</span>      return hashCode;<a name="line.534"></a>
-<span class="sourceLineNo">535</span>    }<a name="line.535"></a>
-<span class="sourceLineNo">536</span><a name="line.536"></a>
-<span class="sourceLineNo">537</span>    @Override<a name="line.537"></a>
-<span class="sourceLineNo">538</span>    public final boolean equals(final Object other) {<a name="line.538"></a>
-<span class="sourceLineNo">539</span>      if (other == this) {<a name="line.539"></a>
-<span class="sourceLineNo">540</span>        return true;<a name="line.540"></a>
-<span class="sourceLineNo">541</span>      } else if (other instanceof ConfigurationValueMetadata) {<a name="line.541"></a>
-<span class="sourceLineNo">542</span>        final ConfigurationValueMetadata her = (ConfigurationValueMetadata)other;<a name="line.542"></a>
-<span class="sourceLineNo">543</span><a name="line.543"></a>
-<span class="sourceLineNo">544</span>        final Object configurationCoordinates = this.getConfigurationCoordinates();<a name="line.544"></a>
-<span class="sourceLineNo">545</span>        if (configurationCoordinates == null) {<a name="line.545"></a>
-<span class="sourceLineNo">546</span>          if (her.getConfigurationCoordinates() != null) {<a name="line.546"></a>
-<span class="sourceLineNo">547</span>            return false;<a name="line.547"></a>
-<span class="sourceLineNo">548</span>          }<a name="line.548"></a>
-<span class="sourceLineNo">549</span>        } else if (!configurationCoordinates.equals(her.getConfigurationCoordinates())) {<a name="line.549"></a>
-<span class="sourceLineNo">550</span>          return false;<a name="line.550"></a>
-<span class="sourceLineNo">551</span>        }<a name="line.551"></a>
-<span class="sourceLineNo">552</span><a name="line.552"></a>
-<span class="sourceLineNo">553</span>        final Object name = this.getName();<a name="line.553"></a>
-<span class="sourceLineNo">554</span>        if (name == null) {<a name="line.554"></a>
-<span class="sourceLineNo">555</span>          if (her.getName() != null) {<a name="line.555"></a>
-<span class="sourceLineNo">556</span>            return false;<a name="line.556"></a>
-<span class="sourceLineNo">557</span>          }<a name="line.557"></a>
-<span class="sourceLineNo">558</span>        } else if (!name.equals(her.getName())) {<a name="line.558"></a>
-<span class="sourceLineNo">559</span>          return false;<a name="line.559"></a>
-<span class="sourceLineNo">560</span>        }<a name="line.560"></a>
-<span class="sourceLineNo">561</span><a name="line.561"></a>
-<span class="sourceLineNo">562</span>        final Object defaultValue = this.getDefaultValue();<a name="line.562"></a>
-<span class="sourceLineNo">563</span>        if (defaultValue == null) {<a name="line.563"></a>
-<span class="sourceLineNo">564</span>          if (her.getDefaultValue() != null) {<a name="line.564"></a>
-<span class="sourceLineNo">565</span>            return false;<a name="line.565"></a>
-<span class="sourceLineNo">566</span>          }<a name="line.566"></a>
-<span class="sourceLineNo">567</span>        } else if (!defaultValue.equals(her.getDefaultValue())) {<a name="line.567"></a>
-<span class="sourceLineNo">568</span>          return false;<a name="line.568"></a>
-<span class="sourceLineNo">569</span>        }<a name="line.569"></a>
-<span class="sourceLineNo">570</span><a name="line.570"></a>
-<span class="sourceLineNo">571</span>        return true;        <a name="line.571"></a>
+<span class="sourceLineNo">534</span><a name="line.534"></a>
+<span class="sourceLineNo">535</span>    /*<a name="line.535"></a>
+<span class="sourceLineNo">536</span>     * Constructors.<a name="line.536"></a>
+<span class="sourceLineNo">537</span>     */<a name="line.537"></a>
+<span class="sourceLineNo">538</span><a name="line.538"></a>
+<span class="sourceLineNo">539</span>    <a name="line.539"></a>
+<span class="sourceLineNo">540</span>    /**<a name="line.540"></a>
+<span class="sourceLineNo">541</span>     * Creates a new {@link ConfigurationValueMetadata}.<a name="line.541"></a>
+<span class="sourceLineNo">542</span>     *<a name="line.542"></a>
+<span class="sourceLineNo">543</span>     * @param configurationCoordinates a {@link Map} of<a name="line.543"></a>
+<span class="sourceLineNo">544</span>     * &lt;em&gt;configuration coordinates&lt;/em&gt; in effect; may be {@code<a name="line.544"></a>
+<span class="sourceLineNo">545</span>     * null}<a name="line.545"></a>
+<span class="sourceLineNo">546</span>     *<a name="line.546"></a>
+<span class="sourceLineNo">547</span>     * @param name the name of the {@link ConfigurationValue}; must<a name="line.547"></a>
+<span class="sourceLineNo">548</span>     * not be {@code null}<a name="line.548"></a>
+<span class="sourceLineNo">549</span>     *<a name="line.549"></a>
+<span class="sourceLineNo">550</span>     * @param defaultValue the default value for the {@link<a name="line.550"></a>
+<span class="sourceLineNo">551</span>     * ConfigurationValue}; may be {@code null}<a name="line.551"></a>
+<span class="sourceLineNo">552</span>     *<a name="line.552"></a>
+<span class="sourceLineNo">553</span>     * @see #getConfigurationCoordinates()<a name="line.553"></a>
+<span class="sourceLineNo">554</span>     *<a name="line.554"></a>
+<span class="sourceLineNo">555</span>     * @see #getName()<a name="line.555"></a>
+<span class="sourceLineNo">556</span>     *<a name="line.556"></a>
+<span class="sourceLineNo">557</span>     * @see #getDefaultValue()<a name="line.557"></a>
+<span class="sourceLineNo">558</span>     */<a name="line.558"></a>
+<span class="sourceLineNo">559</span>    private ConfigurationValueMetadata(final Map&lt;String, String&gt; configurationCoordinates,<a name="line.559"></a>
+<span class="sourceLineNo">560</span>                                       final String name,<a name="line.560"></a>
+<span class="sourceLineNo">561</span>                                       final String defaultValue) {<a name="line.561"></a>
+<span class="sourceLineNo">562</span>      super();<a name="line.562"></a>
+<span class="sourceLineNo">563</span>      Objects.requireNonNull(name);<a name="line.563"></a>
+<span class="sourceLineNo">564</span>      if (configurationCoordinates == null || configurationCoordinates.isEmpty()) {<a name="line.564"></a>
+<span class="sourceLineNo">565</span>        this.configurationCoordinates = Collections.emptyMap();<a name="line.565"></a>
+<span class="sourceLineNo">566</span>      } else {<a name="line.566"></a>
+<span class="sourceLineNo">567</span>        this.configurationCoordinates = Collections.unmodifiableMap(configurationCoordinates);<a name="line.567"></a>
+<span class="sourceLineNo">568</span>      }<a name="line.568"></a>
+<span class="sourceLineNo">569</span>      this.name = name;<a name="line.569"></a>
+<span class="sourceLineNo">570</span>      if (defaultValue == null || defaultValue.equals(ConfigurationValue.NULL)) {<a name="line.570"></a>
+<span class="sourceLineNo">571</span>        this.defaultValue = null;<a name="line.571"></a>
 <span class="sourceLineNo">572</span>      } else {<a name="line.572"></a>
-<span class="sourceLineNo">573</span>        return false;<a name="line.573"></a>
+<span class="sourceLineNo">573</span>        this.defaultValue = defaultValue;<a name="line.573"></a>
 <span class="sourceLineNo">574</span>      }<a name="line.574"></a>
 <span class="sourceLineNo">575</span>    }<a name="line.575"></a>
-<span class="sourceLineNo">576</span>    <a name="line.576"></a>
-<span class="sourceLineNo">577</span>  }<a name="line.577"></a>
-<span class="sourceLineNo">578</span><a name="line.578"></a>
-<span class="sourceLineNo">579</span><a name="line.579"></a>
-<span class="sourceLineNo">580</span>  /**<a name="line.580"></a>
-<span class="sourceLineNo">581</span>   * A {@link BeanAttributes} implementation that delegates all of its<a name="line.581"></a>
-<span class="sourceLineNo">582</span>   * calls to another {@link BeanAttributes}.<a name="line.582"></a>
-<span class="sourceLineNo">583</span>   *<a name="line.583"></a>
-<span class="sourceLineNo">584</span>   * @author &lt;a href="http://about.me/lairdnelson"<a name="line.584"></a>
-<span class="sourceLineNo">585</span>   * target="_parent"&gt;Laird Nelson&lt;/a&gt;<a name="line.585"></a>
-<span class="sourceLineNo">586</span>   *<a name="line.586"></a>
-<span class="sourceLineNo">587</span>   * @see BeanAttributes<a name="line.587"></a>
-<span class="sourceLineNo">588</span>   */<a name="line.588"></a>
-<span class="sourceLineNo">589</span>  private static class DelegatingBeanAttributes&lt;T&gt; implements BeanAttributes&lt;T&gt; {<a name="line.589"></a>
-<span class="sourceLineNo">590</span><a name="line.590"></a>
-<span class="sourceLineNo">591</span>    <a name="line.591"></a>
-<span class="sourceLineNo">592</span>    /*<a name="line.592"></a>
-<span class="sourceLineNo">593</span>     * Instance fields.<a name="line.593"></a>
-<span class="sourceLineNo">594</span>     */<a name="line.594"></a>
-<span class="sourceLineNo">595</span><a name="line.595"></a>
-<span class="sourceLineNo">596</span><a name="line.596"></a>
-<span class="sourceLineNo">597</span>    /**<a name="line.597"></a>
-<span class="sourceLineNo">598</span>     * The {@link BeanAttributes} to which all calls will be<a name="line.598"></a>
-<span class="sourceLineNo">599</span>     * delegated.<a name="line.599"></a>
-<span class="sourceLineNo">600</span>     *<a name="line.600"></a>
-<span class="sourceLineNo">601</span>     * &lt;p&gt;This field is never {@code null}.&lt;/p&gt;<a name="line.601"></a>
-<span class="sourceLineNo">602</span>     */<a name="line.602"></a>
-<span class="sourceLineNo">603</span>    private final BeanAttributes&lt;?&gt; delegate;<a name="line.603"></a>
-<span class="sourceLineNo">604</span><a name="line.604"></a>
-<span class="sourceLineNo">605</span><a name="line.605"></a>
-<span class="sourceLineNo">606</span>    /*<a name="line.606"></a>
-<span class="sourceLineNo">607</span>     * Constructors.<a name="line.607"></a>
-<span class="sourceLineNo">608</span>     */<a name="line.608"></a>
-<span class="sourceLineNo">609</span><a name="line.609"></a>
-<span class="sourceLineNo">610</span><a name="line.610"></a>
-<span class="sourceLineNo">611</span>    /**<a name="line.611"></a>
-<span class="sourceLineNo">612</span>     * Creates a new {@link DelegatingBeanAttributes}.<a name="line.612"></a>
-<span class="sourceLineNo">613</span>     *<a name="line.613"></a>
-<span class="sourceLineNo">614</span>     * @param delegate the {@link BeanAttributes} to which all calls<a name="line.614"></a>
-<span class="sourceLineNo">615</span>     * will be delegated; must not be {@code null}<a name="line.615"></a>
-<span class="sourceLineNo">616</span>     *<a name="line.616"></a>
-<span class="sourceLineNo">617</span>     * @exception NullPointerException if {@code delegate} is {@code<a name="line.617"></a>
-<span class="sourceLineNo">618</span>     * null}<a name="line.618"></a>
-<span class="sourceLineNo">619</span>     */<a name="line.619"></a>
-<span class="sourceLineNo">620</span>    private DelegatingBeanAttributes(final BeanAttributes&lt;?&gt; delegate) {<a name="line.620"></a>
-<span class="sourceLineNo">621</span>      super();<a name="line.621"></a>
-<span class="sourceLineNo">622</span>      Objects.requireNonNull(delegate);<a name="line.622"></a>
-<span class="sourceLineNo">623</span>      this.delegate = delegate;<a name="line.623"></a>
-<span class="sourceLineNo">624</span>    }<a name="line.624"></a>
-<span class="sourceLineNo">625</span><a name="line.625"></a>
-<span class="sourceLineNo">626</span><a name="line.626"></a>
-<span class="sourceLineNo">627</span>    /*<a name="line.627"></a>
-<span class="sourceLineNo">628</span>     * Instance methods.<a name="line.628"></a>
-<span class="sourceLineNo">629</span>     */<a name="line.629"></a>
-<span class="sourceLineNo">630</span>    <a name="line.630"></a>
+<span class="sourceLineNo">576</span><a name="line.576"></a>
+<span class="sourceLineNo">577</span>    /**<a name="line.577"></a>
+<span class="sourceLineNo">578</span>     * Returns a {@link Map} of &lt;em&gt;configuration coordinates&lt;/em&gt;<a name="line.578"></a>
+<span class="sourceLineNo">579</span>     * associated with this {@link ConfigurationValueMetadata}.<a name="line.579"></a>
+<span class="sourceLineNo">580</span>     *<a name="line.580"></a>
+<span class="sourceLineNo">581</span>     * &lt;p&gt;This method never returns {@code null}.&lt;/p&gt;<a name="line.581"></a>
+<span class="sourceLineNo">582</span>     *<a name="line.582"></a>
+<span class="sourceLineNo">583</span>     * @return a non-{@code null} {@link Map} of configuration<a name="line.583"></a>
+<span class="sourceLineNo">584</span>     * coordinates<a name="line.584"></a>
+<span class="sourceLineNo">585</span>     */<a name="line.585"></a>
+<span class="sourceLineNo">586</span>    public final Map&lt;String, String&gt; getConfigurationCoordinates() {<a name="line.586"></a>
+<span class="sourceLineNo">587</span>      return this.configurationCoordinates;<a name="line.587"></a>
+<span class="sourceLineNo">588</span>    }<a name="line.588"></a>
+<span class="sourceLineNo">589</span><a name="line.589"></a>
+<span class="sourceLineNo">590</span>    /**<a name="line.590"></a>
+<span class="sourceLineNo">591</span>     * Returns the name of the {@link ConfigurationValue} for which<a name="line.591"></a>
+<span class="sourceLineNo">592</span>     * this {@link ConfigurationValueMetadata} serves as metadata.<a name="line.592"></a>
+<span class="sourceLineNo">593</span>     *<a name="line.593"></a>
+<span class="sourceLineNo">594</span>     * &lt;p&gt;This method may return {@code null}.&lt;/p&gt;<a name="line.594"></a>
+<span class="sourceLineNo">595</span>     *<a name="line.595"></a>
+<span class="sourceLineNo">596</span>     * @return the name of the {@link ConfigurationValue}, or {@code<a name="line.596"></a>
+<span class="sourceLineNo">597</span>     * null}<a name="line.597"></a>
+<span class="sourceLineNo">598</span>     */<a name="line.598"></a>
+<span class="sourceLineNo">599</span>    public final String getName() {<a name="line.599"></a>
+<span class="sourceLineNo">600</span>      return this.name;<a name="line.600"></a>
+<span class="sourceLineNo">601</span>    }<a name="line.601"></a>
+<span class="sourceLineNo">602</span><a name="line.602"></a>
+<span class="sourceLineNo">603</span>    /**<a name="line.603"></a>
+<span class="sourceLineNo">604</span>     * Returns the default value of the {@link ConfigurationValue} for<a name="line.604"></a>
+<span class="sourceLineNo">605</span>     * which this {@link ConfigurationValueMetadata} serves as<a name="line.605"></a>
+<span class="sourceLineNo">606</span>     * metadata.<a name="line.606"></a>
+<span class="sourceLineNo">607</span>     *<a name="line.607"></a>
+<span class="sourceLineNo">608</span>     * &lt;p&gt;This method may return {@code null}.&lt;/p&gt;<a name="line.608"></a>
+<span class="sourceLineNo">609</span>     *<a name="line.609"></a>
+<span class="sourceLineNo">610</span>     * @return the default value of the {@link ConfigurationValue}, or<a name="line.610"></a>
+<span class="sourceLineNo">611</span>     * {@code null}<a name="line.611"></a>
+<span class="sourceLineNo">612</span>     */<a name="line.612"></a>
+<span class="sourceLineNo">613</span>    public final String getDefaultValue() {<a name="line.613"></a>
+<span class="sourceLineNo">614</span>      return this.defaultValue;<a name="line.614"></a>
+<span class="sourceLineNo">615</span>    }<a name="line.615"></a>
+<span class="sourceLineNo">616</span><a name="line.616"></a>
+<span class="sourceLineNo">617</span>    /**<a name="line.617"></a>
+<span class="sourceLineNo">618</span>     * Returns a hashcode for this {@link ConfigurationValueMetadata}.<a name="line.618"></a>
+<span class="sourceLineNo">619</span>     *<a name="line.619"></a>
+<span class="sourceLineNo">620</span>     * @return a hashcode<a name="line.620"></a>
+<span class="sourceLineNo">621</span>     *<a name="line.621"></a>
+<span class="sourceLineNo">622</span>     * @see #equals(Object)<a name="line.622"></a>
+<span class="sourceLineNo">623</span>     */<a name="line.623"></a>
+<span class="sourceLineNo">624</span>    @Override<a name="line.624"></a>
+<span class="sourceLineNo">625</span>    public final int hashCode() {<a name="line.625"></a>
+<span class="sourceLineNo">626</span>      int hashCode = 17;<a name="line.626"></a>
+<span class="sourceLineNo">627</span><a name="line.627"></a>
+<span class="sourceLineNo">628</span>      final Object configurationCoordinates = this.getConfigurationCoordinates();<a name="line.628"></a>
+<span class="sourceLineNo">629</span>      int c = configurationCoordinates == null ? 0 : configurationCoordinates.hashCode();<a name="line.629"></a>
+<span class="sourceLineNo">630</span>      hashCode = 37 * hashCode + c;<a name="line.630"></a>
 <span class="sourceLineNo">631</span><a name="line.631"></a>
-<span class="sourceLineNo">632</span>    /**<a name="line.632"></a>
-<span class="sourceLineNo">633</span>     * Returns the name for this {@link DelegatingBeanAttributes} if<a name="line.633"></a>
-<span class="sourceLineNo">634</span>     * it has one.<a name="line.634"></a>
-<span class="sourceLineNo">635</span>     *<a name="line.635"></a>
-<span class="sourceLineNo">636</span>     * &lt;p&gt;This method may return {@code null}.&lt;/p&gt;<a name="line.636"></a>
-<span class="sourceLineNo">637</span>     *<a name="line.637"></a>
-<span class="sourceLineNo">638</span>     * @return the name for this {@link DelegatingBeanAttributes}, or<a name="line.638"></a>
-<span class="sourceLineNo">639</span>     * {@code null}<a name="line.639"></a>
-<span class="sourceLineNo">640</span>     *<a name="line.640"></a>
-<span class="sourceLineNo">641</span>     * @see BeanAttributes#getName()<a name="line.641"></a>
-<span class="sourceLineNo">642</span>     */<a name="line.642"></a>
-<span class="sourceLineNo">643</span>    @Override<a name="line.643"></a>
-<span class="sourceLineNo">644</span>    public String getName() {<a name="line.644"></a>
-<span class="sourceLineNo">645</span>      return this.delegate.getName();<a name="line.645"></a>
-<span class="sourceLineNo">646</span>    }<a name="line.646"></a>
-<span class="sourceLineNo">647</span><a name="line.647"></a>
-<span class="sourceLineNo">648</span>    /**<a name="line.648"></a>
-<span class="sourceLineNo">649</span>     * Returns a {@link Set} of {@link Annotation}s that are,<a name="line.649"></a>
-<span class="sourceLineNo">650</span>     * themselves, each {@linkplain BeanManager#isQualifier(Class)<a name="line.650"></a>
-<span class="sourceLineNo">651</span>     * considered to be a qualifier} by CDI.<a name="line.651"></a>
-<span class="sourceLineNo">652</span>     *<a name="line.652"></a>
-<span class="sourceLineNo">653</span>     * &lt;p&gt;This method may return {@code null}.&lt;/p&gt;<a name="line.653"></a>
+<span class="sourceLineNo">632</span>      final Object name = this.getName();<a name="line.632"></a>
+<span class="sourceLineNo">633</span>      c = name == null ? 0 : name.hashCode();<a name="line.633"></a>
+<span class="sourceLineNo">634</span>      hashCode = 37 * hashCode + c;<a name="line.634"></a>
+<span class="sourceLineNo">635</span><a name="line.635"></a>
+<span class="sourceLineNo">636</span>      final Object defaultValue = this.getDefaultValue();<a name="line.636"></a>
+<span class="sourceLineNo">637</span>      c = defaultValue == null ? 0 : defaultValue.hashCode();<a name="line.637"></a>
+<span class="sourceLineNo">638</span>      hashCode = 37 * hashCode + c;<a name="line.638"></a>
+<span class="sourceLineNo">639</span><a name="line.639"></a>
+<span class="sourceLineNo">640</span>      return hashCode;<a name="line.640"></a>
+<span class="sourceLineNo">641</span>    }<a name="line.641"></a>
+<span class="sourceLineNo">642</span><a name="line.642"></a>
+<span class="sourceLineNo">643</span>    /**<a name="line.643"></a>
+<span class="sourceLineNo">644</span>     * Returns {@code true} if the supplied {@link Object} is an<a name="line.644"></a>
+<span class="sourceLineNo">645</span>     * instance of {@link ConfigurationValueMetadata} and has values<a name="line.645"></a>
+<span class="sourceLineNo">646</span>     * equal to the values of this {@link<a name="line.646"></a>
+<span class="sourceLineNo">647</span>     * ConfigurationValueMetadata}'s properties.<a name="line.647"></a>
+<span class="sourceLineNo">648</span>     *<a name="line.648"></a>
+<span class="sourceLineNo">649</span>     * @param other the {@link Object} to test; may be {@code null}<a name="line.649"></a>
+<span class="sourceLineNo">650</span>     *<a name="line.650"></a>
+<span class="sourceLineNo">651</span>     * @return {@code true} if the supplied {@link Object} is equal to<a name="line.651"></a>
+<span class="sourceLineNo">652</span>     * this {@link ConfigurationValueMetadata}; {@code false}<a name="line.652"></a>
+<span class="sourceLineNo">653</span>     * otherwise<a name="line.653"></a>
 <span class="sourceLineNo">654</span>     *<a name="line.654"></a>
-<span class="sourceLineNo">655</span>     * @return a {@link Set} of qualifier {@link Annotation}s, or<a name="line.655"></a>
-<span class="sourceLineNo">656</span>     * {@code null}<a name="line.656"></a>
-<span class="sourceLineNo">657</span>     *<a name="line.657"></a>
-<span class="sourceLineNo">658</span>     * @see BeanAttributes#getQualifiers()<a name="line.658"></a>
-<span class="sourceLineNo">659</span>     *<a name="line.659"></a>
-<span class="sourceLineNo">660</span>     * @see BeanManager#isQualifier(Class)<a name="line.660"></a>
-<span class="sourceLineNo">661</span>     */<a name="line.661"></a>
-<span class="sourceLineNo">662</span>    @Override<a name="line.662"></a>
-<span class="sourceLineNo">663</span>    public Set&lt;Annotation&gt; getQualifiers() {<a name="line.663"></a>
-<span class="sourceLineNo">664</span>      return this.delegate.getQualifiers();<a name="line.664"></a>
-<span class="sourceLineNo">665</span>    }<a name="line.665"></a>
-<span class="sourceLineNo">666</span><a name="line.666"></a>
-<span class="sourceLineNo">667</span>    /**<a name="line.667"></a>
-<span class="sourceLineNo">668</span>     * Returns the {@link Class} representing the scope of the bean<a name="line.668"></a>
-<span class="sourceLineNo">669</span>     * described by this {@link DelegatingBeanAttributes}.<a name="line.669"></a>
-<span class="sourceLineNo">670</span>     *<a name="line.670"></a>
-<span class="sourceLineNo">671</span>     * &lt;p&gt;This method will never return {@code null}.&lt;/p&gt;<a name="line.671"></a>
-<span class="sourceLineNo">672</span>     *<a name="line.672"></a>
-<span class="sourceLineNo">673</span>     * &lt;p&gt;Overrides of this method must not return {@code null}.&lt;/p&gt;<a name="line.673"></a>
-<span class="sourceLineNo">674</span>     *<a name="line.674"></a>
-<span class="sourceLineNo">675</span>     * @return the {@link Class} representing the scope of the bean<a name="line.675"></a>
-<span class="sourceLineNo">676</span>     * described by this {@link DelegatingBeanAttributes}; never<a name="line.676"></a>
-<span class="sourceLineNo">677</span>     * {@code null}<a name="line.677"></a>
-<span class="sourceLineNo">678</span>     *<a name="line.678"></a>
-<span class="sourceLineNo">679</span>     * @see BeanAttributes#getScope()<a name="line.679"></a>
-<span class="sourceLineNo">680</span>     */<a name="line.680"></a>
-<span class="sourceLineNo">681</span>    @Override<a name="line.681"></a>
-<span class="sourceLineNo">682</span>    public Class&lt;? extends Annotation&gt; getScope() {<a name="line.682"></a>
-<span class="sourceLineNo">683</span>      return this.delegate.getScope();<a name="line.683"></a>
-<span class="sourceLineNo">684</span>    }<a name="line.684"></a>
-<span class="sourceLineNo">685</span><a name="line.685"></a>
-<span class="sourceLineNo">686</span>    /**<a name="line.686"></a>
-<span class="sourceLineNo">687</span>     * Returns a {@link Set} of {@link Annotation}s that are,<a name="line.687"></a>
-<span class="sourceLineNo">688</span>     * themselves, each {@linkplain BeanManager#isStereotype(Class)<a name="line.688"></a>
-<span class="sourceLineNo">689</span>     * considered to be a stereotype} by CDI.<a name="line.689"></a>
-<span class="sourceLineNo">690</span>     *<a name="line.690"></a>
-<span class="sourceLineNo">691</span>     * &lt;p&gt;This method may return {@code null}.&lt;/p&gt;<a name="line.691"></a>
-<span class="sourceLineNo">692</span>     *<a name="line.692"></a>
-<span class="sourceLineNo">693</span>     * @return a {@link Set} of stereotype {@link Annotation}s, or<a name="line.693"></a>
-<span class="sourceLineNo">694</span>     * {@code null}<a name="line.694"></a>
-<span class="sourceLineNo">695</span>     *<a name="line.695"></a>
-<span class="sourceLineNo">696</span>     * @see BeanAttributes#getStereotypes()<a name="line.696"></a>
-<span class="sourceLineNo">697</span>     *<a name="line.697"></a>
-<span class="sourceLineNo">698</span>     * @see BeanManager#isStereotype(Class)<a name="line.698"></a>
-<span class="sourceLineNo">699</span>     */<a name="line.699"></a>
-<span class="sourceLineNo">700</span>    @Override<a name="line.700"></a>
-<span class="sourceLineNo">701</span>    public Set&lt;Class&lt;? extends Annotation&gt;&gt; getStereotypes() {<a name="line.701"></a>
-<span class="sourceLineNo">702</span>      return this.delegate.getStereotypes();<a name="line.702"></a>
-<span class="sourceLineNo">703</span>    }<a name="line.703"></a>
-<span class="sourceLineNo">704</span><a name="line.704"></a>
-<span class="sourceLineNo">705</span>    /**<a name="line.705"></a>
-<span class="sourceLineNo">706</span>     * Returns a {@link Set} of {@link Type}s whose elements represent<a name="line.706"></a>
-<span class="sourceLineNo">707</span>     * the bean types of the bean described by this {@link<a name="line.707"></a>
-<span class="sourceLineNo">708</span>     * DelegatingBeanAttributes}.<a name="line.708"></a>
-<span class="sourceLineNo">709</span>     *<a name="line.709"></a>
-<span class="sourceLineNo">710</span>     * &lt;p&gt;This method never returns {@code null}.&lt;/p&gt;<a name="line.710"></a>
-<span class="sourceLineNo">711</span>     *<a name="line.711"></a>
-<span class="sourceLineNo">712</span>     * &lt;p&gt;Overrides of this method must not return {@code null}.&lt;/p&gt;<a name="line.712"></a>
-<span class="sourceLineNo">713</span>     *<a name="line.713"></a>
-<span class="sourceLineNo">714</span>     * @return a non-{@code null} {@link Set} of bean types<a name="line.714"></a>
-<span class="sourceLineNo">715</span>     *<a name="line.715"></a>
-<span class="sourceLineNo">716</span>     * @see BeanAttributes#getTypes()<a name="line.716"></a>
-<span class="sourceLineNo">717</span>     */<a name="line.717"></a>
-<span class="sourceLineNo">718</span>    @Override<a name="line.718"></a>
-<span class="sourceLineNo">719</span>    public Set&lt;Type&gt; getTypes() {<a name="line.719"></a>
-<span class="sourceLineNo">720</span>      return this.delegate.getTypes();<a name="line.720"></a>
-<span class="sourceLineNo">721</span>    }<a name="line.721"></a>
-<span class="sourceLineNo">722</span><a name="line.722"></a>
-<span class="sourceLineNo">723</span>    /**<a name="line.723"></a>
-<span class="sourceLineNo">724</span>     * Returns {@code true} if the bean described by this {@link<a name="line.724"></a>
-<span class="sourceLineNo">725</span>     * DelegatingBeanAttributes} is an alternative; {@code false}<a name="line.725"></a>
-<span class="sourceLineNo">726</span>     * otherwise.<a name="line.726"></a>
-<span class="sourceLineNo">727</span>     *<a name="line.727"></a>
-<span class="sourceLineNo">728</span>     * @return {@code true} if the bean described by this {@link<a name="line.728"></a>
-<span class="sourceLineNo">729</span>     * DelegatingBeanAttributes} is an alternative; {@code false}<a name="line.729"></a>
-<span class="sourceLineNo">730</span>     * otherwise<a name="line.730"></a>
-<span class="sourceLineNo">731</span>     *<a name="line.731"></a>
-<span class="sourceLineNo">732</span>     * @see BeanAttributes#isAlternative()<a name="line.732"></a>
-<span class="sourceLineNo">733</span>     */<a name="line.733"></a>
-<span class="sourceLineNo">734</span>    @Override<a name="line.734"></a>
-<span class="sourceLineNo">735</span>    public boolean isAlternative() {<a name="line.735"></a>
-<span class="sourceLineNo">736</span>      return this.delegate.isAlternative();<a name="line.736"></a>
-<span class="sourceLineNo">737</span>    }<a name="line.737"></a>
-<span class="sourceLineNo">738</span><a name="line.738"></a>
-<span class="sourceLineNo">739</span>    /**<a name="line.739"></a>
-<span class="sourceLineNo">740</span>     * Returns a {@link String} representation of this {@link DelegatingBeanAttributes}.<a name="line.740"></a>
-<span class="sourceLineNo">741</span>     *<a name="line.741"></a>
-<span class="sourceLineNo">742</span>     * &lt;p&gt;This method never returns {@code null}.&lt;/p&gt;<a name="line.742"></a>
-<span class="sourceLineNo">743</span>     *<a name="line.743"></a>
-<span class="sourceLineNo">744</span>     * &lt;p&gt;Overrides of this method must not return {@code null}.&lt;/p&gt;<a name="line.744"></a>
-<span class="sourceLineNo">745</span>     *<a name="line.745"></a>
-<span class="sourceLineNo">746</span>     * @return a non-{@code null} {@link String} representation of<a name="line.746"></a>
-<span class="sourceLineNo">747</span>     * this {@link DelegatingBeanAttributes}<a name="line.747"></a>
-<span class="sourceLineNo">748</span>     */<a name="line.748"></a>
-<span class="sourceLineNo">749</span>    @Override<a name="line.749"></a>
-<span class="sourceLineNo">750</span>    public String toString() {<a name="line.750"></a>
-<span class="sourceLineNo">751</span>      return this.delegate.toString();<a name="line.751"></a>
-<span class="sourceLineNo">752</span>    }<a name="line.752"></a>
-<span class="sourceLineNo">753</span>    <a name="line.753"></a>
-<span class="sourceLineNo">754</span>  }<a name="line.754"></a>
-<span class="sourceLineNo">755</span><a name="line.755"></a>
-<span class="sourceLineNo">756</span>}<a name="line.756"></a>
+<span class="sourceLineNo">655</span>     * @see #hashCode()<a name="line.655"></a>
+<span class="sourceLineNo">656</span>     */<a name="line.656"></a>
+<span class="sourceLineNo">657</span>    @Override<a name="line.657"></a>
+<span class="sourceLineNo">658</span>    public final boolean equals(final Object other) {<a name="line.658"></a>
+<span class="sourceLineNo">659</span>      if (other == this) {<a name="line.659"></a>
+<span class="sourceLineNo">660</span>        return true;<a name="line.660"></a>
+<span class="sourceLineNo">661</span>      } else if (other instanceof ConfigurationValueMetadata) {<a name="line.661"></a>
+<span class="sourceLineNo">662</span>        final ConfigurationValueMetadata her = (ConfigurationValueMetadata)other;<a name="line.662"></a>
+<span class="sourceLineNo">663</span><a name="line.663"></a>
+<span class="sourceLineNo">664</span>        final Object configurationCoordinates = this.getConfigurationCoordinates();<a name="line.664"></a>
+<span class="sourceLineNo">665</span>        if (configurationCoordinates == null) {<a name="line.665"></a>
+<span class="sourceLineNo">666</span>          if (her.getConfigurationCoordinates() != null) {<a name="line.666"></a>
+<span class="sourceLineNo">667</span>            return false;<a name="line.667"></a>
+<span class="sourceLineNo">668</span>          }<a name="line.668"></a>
+<span class="sourceLineNo">669</span>        } else if (!configurationCoordinates.equals(her.getConfigurationCoordinates())) {<a name="line.669"></a>
+<span class="sourceLineNo">670</span>          return false;<a name="line.670"></a>
+<span class="sourceLineNo">671</span>        }<a name="line.671"></a>
+<span class="sourceLineNo">672</span><a name="line.672"></a>
+<span class="sourceLineNo">673</span>        final Object name = this.getName();<a name="line.673"></a>
+<span class="sourceLineNo">674</span>        if (name == null) {<a name="line.674"></a>
+<span class="sourceLineNo">675</span>          if (her.getName() != null) {<a name="line.675"></a>
+<span class="sourceLineNo">676</span>            return false;<a name="line.676"></a>
+<span class="sourceLineNo">677</span>          }<a name="line.677"></a>
+<span class="sourceLineNo">678</span>        } else if (!name.equals(her.getName())) {<a name="line.678"></a>
+<span class="sourceLineNo">679</span>          return false;<a name="line.679"></a>
+<span class="sourceLineNo">680</span>        }<a name="line.680"></a>
+<span class="sourceLineNo">681</span><a name="line.681"></a>
+<span class="sourceLineNo">682</span>        final Object defaultValue = this.getDefaultValue();<a name="line.682"></a>
+<span class="sourceLineNo">683</span>        if (defaultValue == null) {<a name="line.683"></a>
+<span class="sourceLineNo">684</span>          if (her.getDefaultValue() != null) {<a name="line.684"></a>
+<span class="sourceLineNo">685</span>            return false;<a name="line.685"></a>
+<span class="sourceLineNo">686</span>          }<a name="line.686"></a>
+<span class="sourceLineNo">687</span>        } else if (!defaultValue.equals(her.getDefaultValue())) {<a name="line.687"></a>
+<span class="sourceLineNo">688</span>          return false;<a name="line.688"></a>
+<span class="sourceLineNo">689</span>        }<a name="line.689"></a>
+<span class="sourceLineNo">690</span><a name="line.690"></a>
+<span class="sourceLineNo">691</span>        return true;        <a name="line.691"></a>
+<span class="sourceLineNo">692</span>      } else {<a name="line.692"></a>
+<span class="sourceLineNo">693</span>        return false;<a name="line.693"></a>
+<span class="sourceLineNo">694</span>      }<a name="line.694"></a>
+<span class="sourceLineNo">695</span>    }<a name="line.695"></a>
+<span class="sourceLineNo">696</span>    <a name="line.696"></a>
+<span class="sourceLineNo">697</span>  }<a name="line.697"></a>
+<span class="sourceLineNo">698</span><a name="line.698"></a>
+<span class="sourceLineNo">699</span><a name="line.699"></a>
+<span class="sourceLineNo">700</span>  /**<a name="line.700"></a>
+<span class="sourceLineNo">701</span>   * A {@link BeanAttributes} implementation that delegates all of its<a name="line.701"></a>
+<span class="sourceLineNo">702</span>   * calls to another {@link BeanAttributes}.<a name="line.702"></a>
+<span class="sourceLineNo">703</span>   *<a name="line.703"></a>
+<span class="sourceLineNo">704</span>   * @author &lt;a href="http://about.me/lairdnelson"<a name="line.704"></a>
+<span class="sourceLineNo">705</span>   * target="_parent"&gt;Laird Nelson&lt;/a&gt;<a name="line.705"></a>
+<span class="sourceLineNo">706</span>   *<a name="line.706"></a>
+<span class="sourceLineNo">707</span>   * @see BeanAttributes<a name="line.707"></a>
+<span class="sourceLineNo">708</span>   */<a name="line.708"></a>
+<span class="sourceLineNo">709</span>  private static class DelegatingBeanAttributes&lt;T&gt; implements BeanAttributes&lt;T&gt; {<a name="line.709"></a>
+<span class="sourceLineNo">710</span><a name="line.710"></a>
+<span class="sourceLineNo">711</span>    <a name="line.711"></a>
+<span class="sourceLineNo">712</span>    /*<a name="line.712"></a>
+<span class="sourceLineNo">713</span>     * Instance fields.<a name="line.713"></a>
+<span class="sourceLineNo">714</span>     */<a name="line.714"></a>
+<span class="sourceLineNo">715</span><a name="line.715"></a>
+<span class="sourceLineNo">716</span><a name="line.716"></a>
+<span class="sourceLineNo">717</span>    /**<a name="line.717"></a>
+<span class="sourceLineNo">718</span>     * The {@link BeanAttributes} to which all calls will be<a name="line.718"></a>
+<span class="sourceLineNo">719</span>     * delegated.<a name="line.719"></a>
+<span class="sourceLineNo">720</span>     *<a name="line.720"></a>
+<span class="sourceLineNo">721</span>     * &lt;p&gt;This field is never {@code null}.&lt;/p&gt;<a name="line.721"></a>
+<span class="sourceLineNo">722</span>     */<a name="line.722"></a>
+<span class="sourceLineNo">723</span>    private final BeanAttributes&lt;?&gt; delegate;<a name="line.723"></a>
+<span class="sourceLineNo">724</span><a name="line.724"></a>
+<span class="sourceLineNo">725</span><a name="line.725"></a>
+<span class="sourceLineNo">726</span>    /*<a name="line.726"></a>
+<span class="sourceLineNo">727</span>     * Constructors.<a name="line.727"></a>
+<span class="sourceLineNo">728</span>     */<a name="line.728"></a>
+<span class="sourceLineNo">729</span><a name="line.729"></a>
+<span class="sourceLineNo">730</span><a name="line.730"></a>
+<span class="sourceLineNo">731</span>    /**<a name="line.731"></a>
+<span class="sourceLineNo">732</span>     * Creates a new {@link DelegatingBeanAttributes}.<a name="line.732"></a>
+<span class="sourceLineNo">733</span>     *<a name="line.733"></a>
+<span class="sourceLineNo">734</span>     * @param delegate the {@link BeanAttributes} to which all calls<a name="line.734"></a>
+<span class="sourceLineNo">735</span>     * will be delegated; must not be {@code null}<a name="line.735"></a>
+<span class="sourceLineNo">736</span>     *<a name="line.736"></a>
+<span class="sourceLineNo">737</span>     * @exception NullPointerException if {@code delegate} is {@code<a name="line.737"></a>
+<span class="sourceLineNo">738</span>     * null}<a name="line.738"></a>
+<span class="sourceLineNo">739</span>     */<a name="line.739"></a>
+<span class="sourceLineNo">740</span>    private DelegatingBeanAttributes(final BeanAttributes&lt;?&gt; delegate) {<a name="line.740"></a>
+<span class="sourceLineNo">741</span>      super();<a name="line.741"></a>
+<span class="sourceLineNo">742</span>      Objects.requireNonNull(delegate);<a name="line.742"></a>
+<span class="sourceLineNo">743</span>      this.delegate = delegate;<a name="line.743"></a>
+<span class="sourceLineNo">744</span>    }<a name="line.744"></a>
+<span class="sourceLineNo">745</span><a name="line.745"></a>
+<span class="sourceLineNo">746</span><a name="line.746"></a>
+<span class="sourceLineNo">747</span>    /*<a name="line.747"></a>
+<span class="sourceLineNo">748</span>     * Instance methods.<a name="line.748"></a>
+<span class="sourceLineNo">749</span>     */<a name="line.749"></a>
+<span class="sourceLineNo">750</span>    <a name="line.750"></a>
+<span class="sourceLineNo">751</span><a name="line.751"></a>
+<span class="sourceLineNo">752</span>    /**<a name="line.752"></a>
+<span class="sourceLineNo">753</span>     * Returns the name for this {@link DelegatingBeanAttributes} if<a name="line.753"></a>
+<span class="sourceLineNo">754</span>     * it has one.<a name="line.754"></a>
+<span class="sourceLineNo">755</span>     *<a name="line.755"></a>
+<span class="sourceLineNo">756</span>     * &lt;p&gt;This method may return {@code null}.&lt;/p&gt;<a name="line.756"></a>
+<span class="sourceLineNo">757</span>     *<a name="line.757"></a>
+<span class="sourceLineNo">758</span>     * @return the name for this {@link DelegatingBeanAttributes}, or<a name="line.758"></a>
+<span class="sourceLineNo">759</span>     * {@code null}<a name="line.759"></a>
+<span class="sourceLineNo">760</span>     *<a name="line.760"></a>
+<span class="sourceLineNo">761</span>     * @see BeanAttributes#getName()<a name="line.761"></a>
+<span class="sourceLineNo">762</span>     */<a name="line.762"></a>
+<span class="sourceLineNo">763</span>    @Override<a name="line.763"></a>
+<span class="sourceLineNo">764</span>    public String getName() {<a name="line.764"></a>
+<span class="sourceLineNo">765</span>      return this.delegate.getName();<a name="line.765"></a>
+<span class="sourceLineNo">766</span>    }<a name="line.766"></a>
+<span class="sourceLineNo">767</span><a name="line.767"></a>
+<span class="sourceLineNo">768</span>    /**<a name="line.768"></a>
+<span class="sourceLineNo">769</span>     * Returns a {@link Set} of {@link Annotation}s that are,<a name="line.769"></a>
+<span class="sourceLineNo">770</span>     * themselves, each {@linkplain BeanManager#isQualifier(Class)<a name="line.770"></a>
+<span class="sourceLineNo">771</span>     * considered to be a qualifier} by CDI.<a name="line.771"></a>
+<span class="sourceLineNo">772</span>     *<a name="line.772"></a>
+<span class="sourceLineNo">773</span>     * &lt;p&gt;This method may return {@code null}.&lt;/p&gt;<a name="line.773"></a>
+<span class="sourceLineNo">774</span>     *<a name="line.774"></a>
+<span class="sourceLineNo">775</span>     * @return a {@link Set} of qualifier {@link Annotation}s, or<a name="line.775"></a>
+<span class="sourceLineNo">776</span>     * {@code null}<a name="line.776"></a>
+<span class="sourceLineNo">777</span>     *<a name="line.777"></a>
+<span class="sourceLineNo">778</span>     * @see BeanAttributes#getQualifiers()<a name="line.778"></a>
+<span class="sourceLineNo">779</span>     *<a name="line.779"></a>
+<span class="sourceLineNo">780</span>     * @see BeanManager#isQualifier(Class)<a name="line.780"></a>
+<span class="sourceLineNo">781</span>     */<a name="line.781"></a>
+<span class="sourceLineNo">782</span>    @Override<a name="line.782"></a>
+<span class="sourceLineNo">783</span>    public Set&lt;Annotation&gt; getQualifiers() {<a name="line.783"></a>
+<span class="sourceLineNo">784</span>      return this.delegate.getQualifiers();<a name="line.784"></a>
+<span class="sourceLineNo">785</span>    }<a name="line.785"></a>
+<span class="sourceLineNo">786</span><a name="line.786"></a>
+<span class="sourceLineNo">787</span>    /**<a name="line.787"></a>
+<span class="sourceLineNo">788</span>     * Returns the {@link Class} representing the scope of the bean<a name="line.788"></a>
+<span class="sourceLineNo">789</span>     * described by this {@link DelegatingBeanAttributes}.<a name="line.789"></a>
+<span class="sourceLineNo">790</span>     *<a name="line.790"></a>
+<span class="sourceLineNo">791</span>     * &lt;p&gt;This method will never return {@code null}.&lt;/p&gt;<a name="line.791"></a>
+<span class="sourceLineNo">792</span>     *<a name="line.792"></a>
+<span class="sourceLineNo">793</span>     * &lt;p&gt;Overrides of this method must not return {@code null}.&lt;/p&gt;<a name="line.793"></a>
+<span class="sourceLineNo">794</span>     *<a name="line.794"></a>
+<span class="sourceLineNo">795</span>     * @return the {@link Class} representing the scope of the bean<a name="line.795"></a>
+<span class="sourceLineNo">796</span>     * described by this {@link DelegatingBeanAttributes}; never<a name="line.796"></a>
+<span class="sourceLineNo">797</span>     * {@code null}<a name="line.797"></a>
+<span class="sourceLineNo">798</span>     *<a name="line.798"></a>
+<span class="sourceLineNo">799</span>     * @see BeanAttributes#getScope()<a name="line.799"></a>
+<span class="sourceLineNo">800</span>     */<a name="line.800"></a>
+<span class="sourceLineNo">801</span>    @Override<a name="line.801"></a>
+<span class="sourceLineNo">802</span>    public Class&lt;? extends Annotation&gt; getScope() {<a name="line.802"></a>
+<span class="sourceLineNo">803</span>      return this.delegate.getScope();<a name="line.803"></a>
+<span class="sourceLineNo">804</span>    }<a name="line.804"></a>
+<span class="sourceLineNo">805</span><a name="line.805"></a>
+<span class="sourceLineNo">806</span>    /**<a name="line.806"></a>
+<span class="sourceLineNo">807</span>     * Returns a {@link Set} of {@link Annotation}s that are,<a name="line.807"></a>
+<span class="sourceLineNo">808</span>     * themselves, each {@linkplain BeanManager#isStereotype(Class)<a name="line.808"></a>
+<span class="sourceLineNo">809</span>     * considered to be a stereotype} by CDI.<a name="line.809"></a>
+<span class="sourceLineNo">810</span>     *<a name="line.810"></a>
+<span class="sourceLineNo">811</span>     * &lt;p&gt;This method may return {@code null}.&lt;/p&gt;<a name="line.811"></a>
+<span class="sourceLineNo">812</span>     *<a name="line.812"></a>
+<span class="sourceLineNo">813</span>     * @return a {@link Set} of stereotype {@link Annotation}s, or<a name="line.813"></a>
+<span class="sourceLineNo">814</span>     * {@code null}<a name="line.814"></a>
+<span class="sourceLineNo">815</span>     *<a name="line.815"></a>
+<span class="sourceLineNo">816</span>     * @see BeanAttributes#getStereotypes()<a name="line.816"></a>
+<span class="sourceLineNo">817</span>     *<a name="line.817"></a>
+<span class="sourceLineNo">818</span>     * @see BeanManager#isStereotype(Class)<a name="line.818"></a>
+<span class="sourceLineNo">819</span>     */<a name="line.819"></a>
+<span class="sourceLineNo">820</span>    @Override<a name="line.820"></a>
+<span class="sourceLineNo">821</span>    public Set&lt;Class&lt;? extends Annotation&gt;&gt; getStereotypes() {<a name="line.821"></a>
+<span class="sourceLineNo">822</span>      return this.delegate.getStereotypes();<a name="line.822"></a>
+<span class="sourceLineNo">823</span>    }<a name="line.823"></a>
+<span class="sourceLineNo">824</span><a name="line.824"></a>
+<span class="sourceLineNo">825</span>    /**<a name="line.825"></a>
+<span class="sourceLineNo">826</span>     * Returns a {@link Set} of {@link Type}s whose elements represent<a name="line.826"></a>
+<span class="sourceLineNo">827</span>     * the bean types of the bean described by this {@link<a name="line.827"></a>
+<span class="sourceLineNo">828</span>     * DelegatingBeanAttributes}.<a name="line.828"></a>
+<span class="sourceLineNo">829</span>     *<a name="line.829"></a>
+<span class="sourceLineNo">830</span>     * &lt;p&gt;This method never returns {@code null}.&lt;/p&gt;<a name="line.830"></a>
+<span class="sourceLineNo">831</span>     *<a name="line.831"></a>
+<span class="sourceLineNo">832</span>     * &lt;p&gt;Overrides of this method must not return {@code null}.&lt;/p&gt;<a name="line.832"></a>
+<span class="sourceLineNo">833</span>     *<a name="line.833"></a>
+<span class="sourceLineNo">834</span>     * @return a non-{@code null} {@link Set} of bean types<a name="line.834"></a>
+<span class="sourceLineNo">835</span>     *<a name="line.835"></a>
+<span class="sourceLineNo">836</span>     * @see BeanAttributes#getTypes()<a name="line.836"></a>
+<span class="sourceLineNo">837</span>     */<a name="line.837"></a>
+<span class="sourceLineNo">838</span>    @Override<a name="line.838"></a>
+<span class="sourceLineNo">839</span>    public Set&lt;Type&gt; getTypes() {<a name="line.839"></a>
+<span class="sourceLineNo">840</span>      return this.delegate.getTypes();<a name="line.840"></a>
+<span class="sourceLineNo">841</span>    }<a name="line.841"></a>
+<span class="sourceLineNo">842</span><a name="line.842"></a>
+<span class="sourceLineNo">843</span>    /**<a name="line.843"></a>
+<span class="sourceLineNo">844</span>     * Returns {@code true} if the bean described by this {@link<a name="line.844"></a>
+<span class="sourceLineNo">845</span>     * DelegatingBeanAttributes} is an alternative; {@code false}<a name="line.845"></a>
+<span class="sourceLineNo">846</span>     * otherwise.<a name="line.846"></a>
+<span class="sourceLineNo">847</span>     *<a name="line.847"></a>
+<span class="sourceLineNo">848</span>     * @return {@code true} if the bean described by this {@link<a name="line.848"></a>
+<span class="sourceLineNo">849</span>     * DelegatingBeanAttributes} is an alternative; {@code false}<a name="line.849"></a>
+<span class="sourceLineNo">850</span>     * otherwise<a name="line.850"></a>
+<span class="sourceLineNo">851</span>     *<a name="line.851"></a>
+<span class="sourceLineNo">852</span>     * @see BeanAttributes#isAlternative()<a name="line.852"></a>
+<span class="sourceLineNo">853</span>     */<a name="line.853"></a>
+<span class="sourceLineNo">854</span>    @Override<a name="line.854"></a>
+<span class="sourceLineNo">855</span>    public boolean isAlternative() {<a name="line.855"></a>
+<span class="sourceLineNo">856</span>      return this.delegate.isAlternative();<a name="line.856"></a>
+<span class="sourceLineNo">857</span>    }<a name="line.857"></a>
+<span class="sourceLineNo">858</span><a name="line.858"></a>
+<span class="sourceLineNo">859</span>    /**<a name="line.859"></a>
+<span class="sourceLineNo">860</span>     * Returns a {@link String} representation of this {@link DelegatingBeanAttributes}.<a name="line.860"></a>
+<span class="sourceLineNo">861</span>     *<a name="line.861"></a>
+<span class="sourceLineNo">862</span>     * &lt;p&gt;This method never returns {@code null}.&lt;/p&gt;<a name="line.862"></a>
+<span class="sourceLineNo">863</span>     *<a name="line.863"></a>
+<span class="sourceLineNo">864</span>     * &lt;p&gt;Overrides of this method must not return {@code null}.&lt;/p&gt;<a name="line.864"></a>
+<span class="sourceLineNo">865</span>     *<a name="line.865"></a>
+<span class="sourceLineNo">866</span>     * @return a non-{@code null} {@link String} representation of<a name="line.866"></a>
+<span class="sourceLineNo">867</span>     * this {@link DelegatingBeanAttributes}<a name="line.867"></a>
+<span class="sourceLineNo">868</span>     */<a name="line.868"></a>
+<span class="sourceLineNo">869</span>    @Override<a name="line.869"></a>
+<span class="sourceLineNo">870</span>    public String toString() {<a name="line.870"></a>
+<span class="sourceLineNo">871</span>      return this.delegate.toString();<a name="line.871"></a>
+<span class="sourceLineNo">872</span>    }<a name="line.872"></a>
+<span class="sourceLineNo">873</span>    <a name="line.873"></a>
+<span class="sourceLineNo">874</span>  }<a name="line.874"></a>
+<span class="sourceLineNo">875</span><a name="line.875"></a>
+<span class="sourceLineNo">876</span>}<a name="line.876"></a>
 
 
 
