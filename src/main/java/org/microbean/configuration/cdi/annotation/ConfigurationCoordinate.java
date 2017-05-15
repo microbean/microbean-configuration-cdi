@@ -25,40 +25,164 @@ import java.lang.annotation.Target;
 
 import javax.enterprise.util.AnnotationLiteral;
 
+import javax.inject.Qualifier;
+
+/**
+ * A <a
+ * href="https://docs.oracle.com/javase/tutorial/java/annotations/repeating.html"
+ * target="_parent">repeatable annotation</a> representing an
+ * individual configuration coordinate in a universe of such
+ * coordinates.
+ *
+ * <p>Note that this annotation is deliberately <strong>not</strong> a
+ * {@link Qualifier}.</p>
+ *
+ * @author <a href="https://about.me/lairdnelson"
+ * target="_parent">Laird Nelson</a>
+ *
+ * @see ConfigurationCoordinates
+ */
 @Documented
 @Repeatable(ConfigurationCoordinates.class)
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER, ElementType.TYPE })
 public @interface ConfigurationCoordinate {
 
+  /**
+   * The name of the configuration coordinate.
+   *
+   * @return the name of the configuration coordinate
+   */
   String name();
-  
+
+  /**
+   * The value for the configuration coordinate.
+   *
+   * @return the value for the configuration coordinate
+   */
   String value() default "";
 
+
+  /*
+   * Nested classes.
+   */
+
+
+  /**
+   * An {@link AnnotationLiteral} that implements {@link ConfigurationCoordinate}.
+   *
+   * @author <a href="https://about.me/lairdnelson"
+   * target="_parent">Laird Nelson</a>
+   *
+   * @see ConfigurationCoordinate
+   */
   public static final class Literal extends AnnotationLiteral<ConfigurationCoordinate> implements ConfigurationCoordinate {
 
-    public static final ConfigurationCoordinate INSTANCE = new Literal("", "");
+
+    /*
+     * Static fields.
+     */
     
+
+    /*
+     * The version of this class for {@linkplain Serializable
+     * serialization} purposes.
+     *
+     * @see Serializable
+     */
     private static final long serialVersionUID = 1L;
 
-    private final String name;
+
+    /*
+     * Instance fields.
+     */
     
+    
+    /**
+     * The name of the configuration coordinate this {@link Literal}
+     * represents.
+     *
+     * <p>This field will never be {@code null}.</p>
+     *
+     * @see #name()
+     */
+    private final String name;
+
+    /**
+     * The value of the configuration coordinate this {@link Literal}
+     * represents.
+     *
+     * <p>This field will never be {@code null}.</p>
+     *
+     * @see #value()
+     */
     private final String value;
 
-    @Override
-    public final String name() {
-      return this.name;
-    }
-    
-    @Override
-    public final String value() {
-      return this.value;
-    }
 
+    /*
+     * Constructors.
+     */
+
+
+    /**
+     * Creates a new {@link Literal}.
+     *
+     * @param name the name of the configuration coordinate this
+     * {@link Literal} represents; may be {@code null} in which case
+     * the {@linkplain String#isEmpty() empty <code>String</code>}
+     * will be used instead
+     *
+     * @param value the value of the configuration coordinate this
+     * {@link Literal} represents; may be {@code null} in which case
+     * the {@linkplain String#isEmpty() empty <code>String</code>}
+     * will be used instead
+     *
+     * @see #name()
+     *
+     * @see #value()
+     */
     public Literal(final String name, final String value) {
       super();
       this.name = name == null ? "" : name;
       this.value = value == null ? "" : value;
+    }
+
+
+    /*
+     * Instance methods.
+     */
+
+
+    /**
+     * Returns the name of the configuration coordinate this {@link
+     * Literal} represents.
+     *
+     * <p>This method never returns {@code null}.</p>
+     *
+     * @return the name of the configuration coordinate this {@link
+     * Literal} represents; never {@code null}
+     *
+     * @see ConfigurationCoordinate#name()
+     */
+    @Override
+    public final String name() {
+      return this.name;
+    }
+
+    /**
+     * Returns the value of the configuration coordinate this {@link
+     * Literal} represents.
+     *
+     * <p>This method never returns {@code null}.</p>
+     *
+     * @return the value of the configuration coordinate this {@link
+     * Literal} represents; never {@code null}
+     *
+     * @see ConfigurationCoordinate#value()
+     */
+    @Override
+    public final String value() {
+      return this.value;
     }
 
   }

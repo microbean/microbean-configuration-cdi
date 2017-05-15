@@ -24,6 +24,16 @@ import java.lang.annotation.Target;
 
 import javax.inject.Qualifier;
 
+/**
+ * A {@link Qualifier} designating something that has been configured.
+ *
+ * <p>This annotation is reserved for future use.</p>
+ *
+ * @author <a href="https://about.me/lairdnelson"
+ * target="_parent">Laird Nelson</a>
+ *
+ * @see Configuration
+ */
 @Documented
 @Qualifier
 @Retention(RetentionPolicy.RUNTIME)

@@ -350,6 +350,16 @@ public class ConfigurationsExtension implements Extension {
    */
 
 
+  /**
+   * Returns a {@link ConfigurationValueMetadata} object representing
+   * all the configuration-value-related metadata available on the
+   * supplied {@link InjectionPoint}.
+   *
+   * @param injectionPoint the {@link InjectionPoint} to consider; may
+   * be {@code null} in which case {@code null} will be returned
+   *
+   * @return a {@link ConfigurationValueMetadata} object, or {@code null}
+   */
   private static final ConfigurationValueMetadata getMetadata(final InjectionPoint injectionPoint) {
     ConfigurationValueMetadata returnValue = null;
     if (injectionPoint != null) {
@@ -477,17 +487,78 @@ public class ConfigurationsExtension implements Extension {
    */
 
 
+  /**
+   * A value object containing metadata semantically associated with a
+   * {@link ConfigurationValue} injection point.
+   *
+   * @author <a href="https://about.me/lairdnelson"
+   * target="_parent">Laird Nelson</a>
+   *
+   * @see ConfigurationValue
+   */
   private static final class ConfigurationValueMetadata {
 
+
+    /*
+     * Instance fields.
+     */
+
+
+    /**
+     * A {@link Map} of <em>configuration coordinates</em> in effect.
+     *
+     * <p>This field is never {@code null}.</p>
+     *
+     * @see #getConfigurationCoordinates()
+     */
     private final Map<String, String> configurationCoordinates;
 
+    /**
+     * The name of the {@link ConfigurationValue}.
+     *
+     * <p>This field is never {@code null}.</p>
+     *
+     * @see #getName()
+     */
     private final String name;
 
+    /**
+     * The default value to use for the {@link ConfigurationValue}.
+     *
+     * <p>This field may be {@code null}.</p>
+     *
+     * @see #getDefaultValue()
+     */
     private final String defaultValue;
+
+
+    /*
+     * Constructors.
+     */
+
     
+    /**
+     * Creates a new {@link ConfigurationValueMetadata}.
+     *
+     * @param configurationCoordinates a {@link Map} of
+     * <em>configuration coordinates</em> in effect; may be {@code
+     * null}
+     *
+     * @param name the name of the {@link ConfigurationValue}; must
+     * not be {@code null}
+     *
+     * @param defaultValue the default value for the {@link
+     * ConfigurationValue}; may be {@code null}
+     *
+     * @see #getConfigurationCoordinates()
+     *
+     * @see #getName()
+     *
+     * @see #getDefaultValue()
+     */
     private ConfigurationValueMetadata(final Map<String, String> configurationCoordinates,
-                                                     final String name,
-                                                     final String defaultValue) {
+                                       final String name,
+                                       final String defaultValue) {
       super();
       Objects.requireNonNull(name);
       if (configurationCoordinates == null || configurationCoordinates.isEmpty()) {
@@ -503,18 +574,53 @@ public class ConfigurationsExtension implements Extension {
       }
     }
 
+    /**
+     * Returns a {@link Map} of <em>configuration coordinates</em>
+     * associated with this {@link ConfigurationValueMetadata}.
+     *
+     * <p>This method never returns {@code null}.</p>
+     *
+     * @return a non-{@code null} {@link Map} of configuration
+     * coordinates
+     */
     public final Map<String, String> getConfigurationCoordinates() {
       return this.configurationCoordinates;
     }
 
+    /**
+     * Returns the name of the {@link ConfigurationValue} for which
+     * this {@link ConfigurationValueMetadata} serves as metadata.
+     *
+     * <p>This method may return {@code null}.</p>
+     *
+     * @return the name of the {@link ConfigurationValue}, or {@code
+     * null}
+     */
     public final String getName() {
       return this.name;
     }
 
+    /**
+     * Returns the default value of the {@link ConfigurationValue} for
+     * which this {@link ConfigurationValueMetadata} serves as
+     * metadata.
+     *
+     * <p>This method may return {@code null}.</p>
+     *
+     * @return the default value of the {@link ConfigurationValue}, or
+     * {@code null}
+     */
     public final String getDefaultValue() {
       return this.defaultValue;
     }
 
+    /**
+     * Returns a hashcode for this {@link ConfigurationValueMetadata}.
+     *
+     * @return a hashcode
+     *
+     * @see #equals(Object)
+     */
     @Override
     public final int hashCode() {
       int hashCode = 17;
@@ -534,6 +640,20 @@ public class ConfigurationsExtension implements Extension {
       return hashCode;
     }
 
+    /**
+     * Returns {@code true} if the supplied {@link Object} is an
+     * instance of {@link ConfigurationValueMetadata} and has values
+     * equal to the values of this {@link
+     * ConfigurationValueMetadata}'s properties.
+     *
+     * @param other the {@link Object} to test; may be {@code null}
+     *
+     * @return {@code true} if the supplied {@link Object} is equal to
+     * this {@link ConfigurationValueMetadata}; {@code false}
+     * otherwise
+     *
+     * @see #hashCode()
+     */
     @Override
     public final boolean equals(final Object other) {
       if (other == this) {
