@@ -79,6 +79,11 @@ import org.microbean.configuration.cdi.annotation.ConfigurationValue;
 public class ConfigurationsExtension implements Extension {
 
 
+  /*
+   * Static fields.
+   */
+  
+
   /**
    * An {@linkplain Collections#unmodifiableMap(Map) immutable} {@link
    * Map} of values for primitive {@link Type}s that have not been
@@ -103,6 +108,14 @@ public class ConfigurationsExtension implements Extension {
         put(void.class, null);
       }
     });
+
+
+  /*
+   * Instance fields.
+   */
+
+
+  private Configurations configurations;
   
 
   /*
@@ -136,9 +149,9 @@ public class ConfigurationsExtension implements Extension {
    */
   private final void addConfigurations(@Observes final BeforeBeanDiscovery event) {
     if (event != null) {
-      final Configurations configurations = Configurations.newInstance();
-      assert configurations != null;
-      event.addAnnotatedType(configurations.getClass(), "configurations")
+      this.configurations = Configurations.newInstance();
+      assert this.configurations != null;
+      event.addAnnotatedType(this.configurations.getClass(), "configurations")
         .add(SingletonLiteral.INSTANCE);
     }
   }
@@ -180,36 +193,27 @@ public class ConfigurationsExtension implements Extension {
             }
           }
           if (configurationValue != null) {
-            final Instance<Object> i = beanManager.createInstance();
-            assert i != null;
-            final Instance<Configurations> configurationsInstance = i.select(Configurations.class);
-            assert configurationsInstance != null;
-            if (configurationsInstance.isResolvable()) {
-              final Configurations configurations = configurationsInstance.get();
-              assert configurations != null;
-
-              final Set<Annotation> newQualifiers = new HashSet<>(qualifiers);
-              if (configurationCoordinates != null) {
-                newQualifiers.remove(configurationCoordinates);
-              }
-              final ConfigurationCoordinates.Literal literal = new ConfigurationCoordinates.Literal(configurationCoordinates);
-              final Map<String, String> coordinatesMap = configurations.getConfigurationCoordinates();
-              if (coordinatesMap != null && !coordinatesMap.isEmpty()) {
-                final Set<Entry<String, String>> entries = coordinatesMap.entrySet();
-                assert entries != null;
-                for (final Entry<String, String> entry : entries) {
-                  final String name = entry.getKey();
-                  assert name != null;
-                  final String value = entry.getValue();
-                  assert value != null;
-                  if (!literal.containsKey(name)) {
-                    literal.add(new ConfigurationCoordinate.Literal(name, value));
-                  }
+            final Set<Annotation> newQualifiers = new HashSet<>(qualifiers);
+            if (configurationCoordinates != null) {
+              newQualifiers.remove(configurationCoordinates);
+            }
+            final ConfigurationCoordinates.Literal literal = new ConfigurationCoordinates.Literal(configurationCoordinates);
+            final Map<String, String> coordinatesMap = this.configurations.getConfigurationCoordinates();
+            if (coordinatesMap != null && !coordinatesMap.isEmpty()) {
+              final Set<Entry<String, String>> entries = coordinatesMap.entrySet();
+              assert entries != null;
+              for (final Entry<String, String> entry : entries) {
+                final String name = entry.getKey();
+                assert name != null;
+                final String value = entry.getValue();
+                assert value != null;
+                if (!literal.containsKey(name)) {
+                  literal.add(new ConfigurationCoordinate.Literal(name, value));
                 }
               }
-              newQualifiers.add(literal);
-              event.configureInjectionPoint().qualifiers(newQualifiers);
             }
+            newQualifiers.add(literal);
+            event.configureInjectionPoint().qualifiers(newQualifiers);
           }
         }
       }
@@ -242,37 +246,29 @@ public class ConfigurationsExtension implements Extension {
    */
   private final void installConfigurationValueProducerMethods(@Observes final AfterBeanDiscovery event, final BeanManager beanManager) {
     if (event != null && beanManager != null) {
-      final Instance<Object> i = beanManager.createInstance();
-      assert i != null;
-      final Instance<Configurations> configurationsInstance = i.select(Configurations.class);
-      assert configurationsInstance != null;
-      if (configurationsInstance.isResolvable()) {
-        final Configurations configurations = configurationsInstance.get();
-        assert configurations != null;
-        final Set<Type> types = configurations.getConversionTypes();
-        if (types != null && !types.isEmpty()) {
-          final AnnotatedType<ConfigurationsExtension> thisType = beanManager.createAnnotatedType(ConfigurationsExtension.class);
-          final AnnotatedMethod<? super ConfigurationsExtension> producerMethod = thisType.getMethods().stream()
-            .filter(m -> m.getJavaMember().getName().equals("produceConfigurationValue"))
-            .findFirst()
-            .get();
-          final BeanAttributes<?> producerAttributes = beanManager.createBeanAttributes(producerMethod);
-          for (final Type type : types) {
-            assert type != null;
-            final Bean<?> bean =
-              beanManager.createBean(new DelegatingBeanAttributes<Object>(producerAttributes) {
-                  @Override
-                  public final Set<Type> getTypes() {
-                    final Set<Type> types = new HashSet<>();
-                    types.add(Object.class);
-                    types.add(type);
-                    return types;
-                  }
-                },
-                ConfigurationsExtension.class,
-                beanManager.getProducerFactory(producerMethod, null /* null OK; producer method is static */));
-            event.addBean(bean);
-          }
+      final Set<Type> types = this.configurations.getConversionTypes();
+      if (types != null && !types.isEmpty()) {
+        final AnnotatedType<ConfigurationsExtension> thisType = beanManager.createAnnotatedType(ConfigurationsExtension.class);
+        final AnnotatedMethod<? super ConfigurationsExtension> producerMethod = thisType.getMethods().stream()
+          .filter(m -> m.getJavaMember().getName().equals("produceConfigurationValue"))
+          .findFirst()
+          .get();
+        final BeanAttributes<?> producerAttributes = beanManager.createBeanAttributes(producerMethod);
+        for (final Type type : types) {
+          assert type != null;
+          final Bean<?> bean =
+            beanManager.createBean(new DelegatingBeanAttributes<Object>(producerAttributes) {
+                @Override
+                public final Set<Type> getTypes() {
+                  final Set<Type> types = new HashSet<>();
+                  types.add(Object.class);
+                  types.add(type);
+                  return types;
+                }
+              },
+              ConfigurationsExtension.class,
+              beanManager.getProducerFactory(producerMethod, null /* null OK; producer method is static */));
+          event.addBean(bean);
         }
       }
     }
