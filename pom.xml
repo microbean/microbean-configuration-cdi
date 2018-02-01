@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:Xlint="urn:javac" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:Xlint="urn:javac"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
-  <prerequisites>
-    <maven>3.3.9</maven>
-  </prerequisites>
 
   <artifactId>microbean-configuration-cdi</artifactId>
   <version>0.1.6-SNAPSHOT</version>
@@ -17,12 +17,12 @@
 
   <name>MicroBean Configuration for CDI</name>
   <description>${project.name}</description>
-  <url>https://ljnelson.github.io/${project.artifactId}</url>
+  <url>https://microbean.github.io/${project.artifactId}</url>
 
   <scm>
-    <connection>scm:git:git@github.com:ljnelson/${project.artifactId}.git</connection>
-    <developerConnection>scm:git:git@github.com:ljnelson/${project.artifactId}.git</developerConnection>
-    <url>https://github.com/ljnelson/${project.artifactId}/</url>
+    <connection>scm:git:git@github.com:microbean/${project.artifactId}.git</connection>
+    <developerConnection>scm:git:git@github.com:microbean/${project.artifactId}.git</developerConnection>
+    <url>https://github.com/microbean/${project.artifactId}/</url>
     <tag>HEAD</tag>
   </scm>
 
@@ -253,7 +253,7 @@
     <findbugs.threshold>Medium</findbugs.threshold>
 
     <!-- maven-javadoc-plugin properties; see https://maven.apache.org/plugins/maven-javadoc-plugin/javadoc-mojo.html -->
-    <links>http://docs.jboss.org/cdi/api/2.0/,http://docs.oracle.com/javaee/7/api/,https://ljnelson.github.io/microbean-configuration/apidocs/,https://ljnelson.github.io/microbean-configuration-api/apidocs/</links>
+    <links>http://docs.jboss.org/cdi/api/2.0/,http://docs.oracle.com/javaee/7/api/,https://microbean.github.io/microbean-configuration/apidocs/,https://microbean.github.io/microbean-configuration-api/apidocs/</links>
 
     <!-- maven-release-plugin properties -->
     <goals>deploy,site-deploy</goals>
