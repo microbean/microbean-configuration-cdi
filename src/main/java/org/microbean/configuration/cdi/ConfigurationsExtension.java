@@ -32,6 +32,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import javax.enterprise.context.Dependent;
 
 import javax.enterprise.event.Observes;
@@ -115,7 +118,21 @@ public class ConfigurationsExtension implements Extension {
    */
 
 
+  /**
+   * The {@link Configurations} to which most work is delegated.
+   *
+   * <p>This field may be {@code null}.</p>
+   */
   private Configurations configurations;
+
+  /**
+   * A {@link Logger} for use by this {@link ConfigurationsExtension}.
+   *
+   * <p>This field is never {@code null}.</p>
+   *
+   * @see #createLogger()
+   */
+  protected final Logger logger;
   
 
   /*
@@ -125,16 +142,39 @@ public class ConfigurationsExtension implements Extension {
   
   /**
    * Creates a new {@link ConfigurationsExtension}.
+   *
+   * @exception IllegalStateException if {@code #createLogger()}
+   * returns {@code null}
+   *
+   * @see #createLogger()
    */
   public ConfigurationsExtension() {
     super();
+    this.logger = this.createLogger();
+    if (this.logger == null) {
+      throw new IllegalStateException("createLogger() == null");
+    }
   }
 
 
   /*
    * Instance methods.
    */
-  
+
+
+  /**
+   * Returns a {@link Logger} for use by {@link
+   * ConfigurationsExtension} implementations.
+   *
+   * <p>This method never returns {@code null}.</p>
+   *
+   * <p>Overrides of this method must not return {@code null}.</p>
+   *
+   * @return a non-{@code null} {@link Logger}
+   */
+  protected Logger createLogger() {
+    return Logger.getLogger(this.getClass().getName());
+  }
 
   /**
    * {@linkplain Observes Observes} the {@link BeforeBeanDiscovery}
@@ -148,11 +188,19 @@ public class ConfigurationsExtension implements Extension {
    * implementation is available
    */
   private final void addConfigurations(@Observes final BeforeBeanDiscovery event) {
+    final String cn = this.getClass().getName();
+    final String mn = "addConfigurations";
+    if (this.logger.isLoggable(Level.FINER)) {
+      this.logger.entering(cn, mn, event);
+    }
     if (event != null) {
       this.configurations = Configurations.newInstance();
       assert this.configurations != null;
       event.addAnnotatedType(this.configurations.getClass(), "configurations")
         .add(SingletonLiteral.INSTANCE);
+    }
+    if (this.logger.isLoggable(Level.FINER)) {
+      this.logger.exiting(cn, mn);
     }
   }
 
@@ -177,6 +225,11 @@ public class ConfigurationsExtension implements Extension {
    * @see ConfigurationValue
    */
   private final void installConfigurationCoordinateQualifiers(@Observes final ProcessInjectionPoint<?, ?> event, final BeanManager beanManager) {
+    final String cn = this.getClass().getName();
+    final String mn = "installConfigurationCoordinateQualifiers";
+    if (this.logger.isLoggable(Level.FINER)) {
+      this.logger.entering(cn, mn, new Object[] { event, beanManager });
+    }
     if (event != null && beanManager != null) {
       final InjectionPoint injectionPoint = event.getInjectionPoint();
       if (injectionPoint != null) {
@@ -218,6 +271,9 @@ public class ConfigurationsExtension implements Extension {
         }
       }
     }
+    if (this.logger.isLoggable(Level.FINER)) {
+      this.logger.exiting(cn, mn);
+    }
   }
   
   /**
@@ -245,6 +301,11 @@ public class ConfigurationsExtension implements Extension {
    * @see #produceConfigurationValue(InjectionPoint, Configurations)
    */
   private final void installConfigurationValueProducerMethods(@Observes final AfterBeanDiscovery event, final BeanManager beanManager) {
+    final String cn = this.getClass().getName();
+    final String mn = "installConfigurationValueProducerMethods";
+    if (this.logger.isLoggable(Level.FINER)) {
+      this.logger.entering(cn, mn, new Object[] { event, beanManager });
+    }
     if (event != null && beanManager != null) {
       final Set<Type> types = this.configurations.getConversionTypes();
       if (types != null && !types.isEmpty()) {
@@ -272,8 +333,17 @@ public class ConfigurationsExtension implements Extension {
         }
       }
     }
+    if (this.logger.isLoggable(Level.FINER)) {
+      this.logger.exiting(cn, mn);
+    }
   }
 
+
+  /*
+   * Static methods.
+   */
+
+  
   /**
    * A template of sorts for {@link ProducerFactory} implementations
    * created and installed by the {@link
@@ -324,6 +394,13 @@ public class ConfigurationsExtension implements Extension {
   @ConfigurationValue
   @Dependent
   private static final Object produceConfigurationValue(final InjectionPoint injectionPoint, final Configurations configurations) {
+    final String cn = ConfigurationsExtension.class.getName();
+    final Logger logger = Logger.getLogger(cn);
+    assert logger != null;
+    final String mn = "produceConfigurationValue";
+    if (logger.isLoggable(Level.FINER)) {
+      logger.entering(cn, mn, new Object[] { injectionPoint, configurations });
+    }
     Objects.requireNonNull(injectionPoint);
     Objects.requireNonNull(configurations);
     final ConfigurationValueMetadata metadata = getMetadata(injectionPoint);
@@ -336,6 +413,9 @@ public class ConfigurationsExtension implements Extension {
     Object returnValue = configurations.getValue(coordinates, name, injectionPointType, defaultValue);
     if (returnValue == null && defaultValue == null && injectionPointType instanceof Class && ((Class<?>)injectionPointType).isPrimitive()) {
       returnValue = uninitializedValues.get(injectionPointType);
+    }
+    if (logger.isLoggable(Level.FINER)) {
+      logger.exiting(cn, mn, returnValue);
     }
     return returnValue;
   }
@@ -357,6 +437,13 @@ public class ConfigurationsExtension implements Extension {
    * @return a {@link ConfigurationValueMetadata} object, or {@code null}
    */
   private static final ConfigurationValueMetadata getMetadata(final InjectionPoint injectionPoint) {
+    final String cn = ConfigurationsExtension.class.getName();
+    final Logger logger = Logger.getLogger(cn);
+    assert logger != null;
+    final String mn = "getMetadata";
+    if (logger.isLoggable(Level.FINER)) {
+      logger.entering(cn, mn, injectionPoint);
+    }
     ConfigurationValueMetadata returnValue = null;
     if (injectionPoint != null) {
       final Set<Annotation> qualifiers = injectionPoint.getQualifiers();
@@ -473,6 +560,9 @@ public class ConfigurationsExtension implements Extension {
         }
         returnValue = new ConfigurationValueMetadata(configurationCoordinates, name, defaultValue);
       }
+    }
+    if (logger.isLoggable(Level.FINER)) {
+      logger.exiting(cn, mn, returnValue);
     }
     return returnValue;
   }

@@ -1,1 +1,1 @@
-# MicroBean Configuration for CDI
+# microBean Configuration for CDI
