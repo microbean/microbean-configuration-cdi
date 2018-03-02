@@ -1,6 +1,6 @@
 /* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-
  *
- * Copyright © 2017 MicroBean.
+ * Copyright © 2017-2018 microBean.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,14 @@ import java.lang.reflect.Parameter;
 import java.lang.reflect.Member;
 import java.lang.reflect.Type;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -406,11 +411,11 @@ public class ConfigurationsExtension implements Extension {
     final ConfigurationValueMetadata metadata = getMetadata(injectionPoint);
     assert metadata != null : "metadata == null";
     final Map<String, String> coordinates = metadata.getConfigurationCoordinates();
-    final String name = metadata.getName();
-    assert name != null;
+    final Collection<String> names = metadata.getNames();
+    assert names != null;
     final String defaultValue = metadata.getDefaultValue();
     final Type injectionPointType = injectionPoint.getType();
-    Object returnValue = configurations.getValue(coordinates, name, injectionPointType, defaultValue);
+    Object returnValue = configurations.getValue(coordinates, names, injectionPointType, defaultValue);
     if (returnValue == null && defaultValue == null && injectionPointType instanceof Class && ((Class<?>)injectionPointType).isPrimitive()) {
       returnValue = uninitializedValues.get(injectionPointType);
     }
@@ -449,11 +454,11 @@ public class ConfigurationsExtension implements Extension {
       final Set<Annotation> qualifiers = injectionPoint.getQualifiers();
       if (qualifiers != null && !qualifiers.isEmpty()) {
         Map<String, String> configurationCoordinates = null;
-        String name = null;
+        List<String> names = null;
         String defaultValue = null;
         for (final Annotation qualifier : qualifiers) {
           if (qualifier instanceof ConfigurationValue) {
-            if (name == null) {
+            if (names == null) {
               final ConfigurationValue configurationValue = (ConfigurationValue)qualifier;
               defaultValue = configurationValue.defaultValue();
               if (defaultValue == null || defaultValue.equals(ConfigurationValue.NULL)) {
@@ -464,14 +469,15 @@ public class ConfigurationsExtension implements Extension {
               }
               Annotated annotated = injectionPoint.getAnnotated();
               assert annotated != null;
-              name = configurationValue.value().trim();
-              assert name != null;
-              if (name.isEmpty()) {
+              names = new ArrayList<>();
+              names.addAll(Arrays.asList(configurationValue.value()));
+              String prefix = null;
+              if (names.isEmpty()) {
                 // Try to get it from the annotated element
                 if (annotated instanceof AnnotatedField) {
                   final Member field = ((AnnotatedField)annotated).getJavaMember();
                   assert field != null;
-                  name = field.getName();
+                  names.add(field.getName());
                 } else if (annotated instanceof AnnotatedParameter) {
                   final AnnotatedParameter<?> annotatedParameter = (AnnotatedParameter<?>)annotated;
                   
@@ -493,7 +499,7 @@ public class ConfigurationsExtension implements Extension {
                   assert parameter != null;
                   
                   if (parameter.isNamePresent()) {
-                    name = parameter.getName();
+                    names.add(parameter.getName());
                   } else {
                     throw new IllegalStateException("The parameter at index " +
                                                     parameterIndex +
@@ -508,10 +514,10 @@ public class ConfigurationsExtension implements Extension {
                                                     " annotation.");
                   }
                 } else {
-                  name = null;
+                  assert names.isEmpty();
                 }
               }
-              if (name != null) {
+              if (!names.isEmpty()) {
                 // See if the InjectionPoint is "inside" a "context" with
                 // a @Configuration annotation; that will define our
                 // prefix if so
@@ -530,10 +536,17 @@ public class ConfigurationsExtension implements Extension {
                       assert false : "Unexpected annotated: " + annotated;
                     }
                   } else {
-                    final String prefix = configuration.value().trim(); // TODO: trim?
+                    prefix = configuration.value().trim(); // TODO: trim?
                     assert prefix != null;
-                    if (!prefix.isEmpty()) {
-                      name = new StringBuilder(prefix).append(".").append(name).toString();
+                    final ListIterator<String> iterator = names.listIterator();
+                    assert iterator != null;
+                    while (iterator.hasNext()) {
+                      final String name = iterator.next();
+                      if (name == null || name.isEmpty() || name.equals(ConfigurationValue.NULL)) {
+                        iterator.remove();                        
+                      } else if (!prefix.isEmpty()) {
+                        iterator.set(new StringBuilder(prefix).append('.').append(name).toString());
+                      }
                     }
                   }
                 }
@@ -558,7 +571,7 @@ public class ConfigurationsExtension implements Extension {
             }
           }
         }
-        returnValue = new ConfigurationValueMetadata(configurationCoordinates, name, defaultValue);
+        returnValue = new ConfigurationValueMetadata(configurationCoordinates, names, defaultValue);
       }
     }
     if (logger.isLoggable(Level.FINER)) {
@@ -606,7 +619,7 @@ public class ConfigurationsExtension implements Extension {
      *
      * @see #getName()
      */
-    private final String name;
+    private final Collection<String> names;
 
     /**
      * The default value to use for the {@link ConfigurationValue}.
@@ -630,7 +643,7 @@ public class ConfigurationsExtension implements Extension {
      * <em>configuration coordinates</em> in effect; may be {@code
      * null}
      *
-     * @param name the name of the {@link ConfigurationValue}; must
+     * @param names the names of the {@link ConfigurationValue}; must
      * not be {@code null}
      *
      * @param defaultValue the default value for the {@link
@@ -638,21 +651,25 @@ public class ConfigurationsExtension implements Extension {
      *
      * @see #getConfigurationCoordinates()
      *
-     * @see #getName()
+     * @see #getNames()
      *
      * @see #getDefaultValue()
      */
     private ConfigurationValueMetadata(final Map<String, String> configurationCoordinates,
-                                       final String name,
+                                       final Collection<String> names,
                                        final String defaultValue) {
       super();
-      Objects.requireNonNull(name);
+      Objects.requireNonNull(names);
       if (configurationCoordinates == null || configurationCoordinates.isEmpty()) {
         this.configurationCoordinates = Collections.emptyMap();
       } else {
         this.configurationCoordinates = Collections.unmodifiableMap(configurationCoordinates);
       }
-      this.name = name;
+      if (names == null || names.isEmpty()) {
+        this.names = Collections.emptySet();
+      } else {
+        this.names = Collections.unmodifiableCollection(new ArrayList<>(names));
+      }
       if (defaultValue == null || defaultValue.equals(ConfigurationValue.NULL)) {
         this.defaultValue = null;
       } else {
@@ -674,16 +691,16 @@ public class ConfigurationsExtension implements Extension {
     }
 
     /**
-     * Returns the name of the {@link ConfigurationValue} for which
+     * Returns the names of the {@link ConfigurationValue} for which
      * this {@link ConfigurationValueMetadata} serves as metadata.
      *
      * <p>This method may return {@code null}.</p>
      *
-     * @return the name of the {@link ConfigurationValue}, or {@code
+     * @return the names of the {@link ConfigurationValue}, or {@code
      * null}
      */
-    public final String getName() {
-      return this.name;
+    public final Collection<String> getNames() {
+      return this.names;
     }
 
     /**
@@ -715,8 +732,8 @@ public class ConfigurationsExtension implements Extension {
       int c = configurationCoordinates == null ? 0 : configurationCoordinates.hashCode();
       hashCode = 37 * hashCode + c;
 
-      final Object name = this.getName();
-      c = name == null ? 0 : name.hashCode();
+      final Object names = this.getNames();
+      c = names == null ? 0 : names.hashCode();
       hashCode = 37 * hashCode + c;
 
       final Object defaultValue = this.getDefaultValue();
@@ -756,12 +773,12 @@ public class ConfigurationsExtension implements Extension {
           return false;
         }
 
-        final Object name = this.getName();
-        if (name == null) {
-          if (her.getName() != null) {
+        final Object names = this.getNames();
+        if (names == null) {
+          if (her.getNames() != null) {
             return false;
           }
-        } else if (!name.equals(her.getName())) {
+        } else if (!names.equals(her.getNames())) {
           return false;
         }
 

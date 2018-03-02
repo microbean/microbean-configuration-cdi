@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>microbean-configuration-cdi</artifactId>
-  <version>0.2.2-SNAPSHOT</version>
+  <version>0.3.0-SNAPSHOT</version>
 
   <parent>
     <groupId>org.microbean</groupId>
@@ -64,14 +64,14 @@
       <dependency>
         <groupId>org.microbean</groupId>
         <artifactId>microbean-configuration-api</artifactId>
-        <version>0.2.0</version>
+        <version>0.3.0</version>
         <type>jar</type>
       </dependency>
       
       <dependency>
         <groupId>org.microbean</groupId>
         <artifactId>microbean-configuration</artifactId>
-        <version>0.2.1</version>
+        <version>0.3.0</version>
         <type>jar</type>
       </dependency>
       
@@ -194,6 +194,22 @@
       <plugins>
 
         <plugin>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <configuration>
+            <groups>
+              <group>
+                <title>API Annotations, Classes and Interfaces</title>
+                <packages>org.microbean.configuration.cdi.annotation</packages>
+              </group>
+              <group>
+                <title>CDI Portable Extension Classes</title>
+                <packages>org.microbean.configuration.cdi</packages>
+              </group>
+            </groups>
+          </configuration>
+        </plugin>
+        
+        <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>findbugs-maven-plugin</artifactId>
           <version>3.0.4</version>
@@ -250,7 +266,7 @@
 
     <!-- maven-javadoc-plugin properties; see https://maven.apache.org/plugins/maven-javadoc-plugin/javadoc-mojo.html -->
     <doctitle>&lt;a href="${project.url}" target="_parent"&gt;${project.artifactId}&lt;/a&gt; ${project.version} &lt;a href="https://travis-ci.org/microbean/${project.artifactId}" target="_parent"&gt;&lt;img src="https://travis-ci.org/microbean/${project.artifactId}.svg?branch=master"&gt;&lt;/a&gt;</doctitle>
-    <links>http://docs.jboss.org/cdi/api/2.0/,http://docs.oracle.com/javaee/7/api/,https://microbean.github.io/microbean-configuration/apidocs/,https://microbean.github.io/microbean-configuration-api/apidocs/</links>
+    <links>http://docs.jboss.org/cdi/api/2.0/,https://docs.oracle.com/javaee/7/api/,https://microbean.github.io/microbean-configuration/apidocs/,https://microbean.github.io/microbean-configuration-api/apidocs/</links>
 
     <!-- maven-release-plugin properties -->
     <goals>deploy,site-deploy</goals>

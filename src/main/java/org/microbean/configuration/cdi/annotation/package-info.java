@@ -17,7 +17,10 @@
 
 /**
  * Provides annotation classes and interfaces for helping to integrate
- * the MicroBean Configuration framework into CDI.
+ * the <a
+ * href="https://microbean.github.io/microbean-configuration-api/"
+ * target="_parent">microBean Configuration framework</a> into <a
+ * href="http://www.cdi-spec.org/" target="_parent">CDI</a>.
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>

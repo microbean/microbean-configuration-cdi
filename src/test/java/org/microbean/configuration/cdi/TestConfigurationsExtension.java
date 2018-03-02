@@ -64,7 +64,7 @@ public class TestConfigurationsExtension {
    */
 
   private final void onStartup(@Observes @Initialized(ApplicationScoped.class) final Object event,
-                               @ConfigurationValue("home")
+                               @ConfigurationValue({ "home", "bozo" })
                                @ConfigurationCoordinate(name = "a", value = "b")
                                @ConfigurationCoordinate(name = "c", value = "d")
                                final String javaHome) {

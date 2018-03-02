@@ -24,6 +24,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 import javax.enterprise.util.AnnotationLiteral;
 import javax.enterprise.util.Nonbinding;
 
@@ -35,7 +38,7 @@ import javax.inject.Qualifier;
  *
  * <p>In the case of method parameters and instance fields, this
  * usually means that the annotated element would like to receive a
- * particular configuration value from the MicroBean Configurations
+ * particular configuration value from the microBean Configuration
  * framework.</p>
  *
  * @author <a href="https://about.me/lairdnelson"
@@ -77,13 +80,17 @@ public @interface ConfigurationValue {
 
 
   /**
-   * The name of the configuration value in question.
+   * The names of the configuration value in question.
    *
-   * <p>If this element is not specified, the effective configuration
-   * value name will be the name of the annotated element upon which this
-   * {@link ConfigurationValue} appears.</p>
+   * <p>Each name in the returned array represents a name of a
+   * configuration property whose value will be sought in order.</p>
    *
-   * <p>This element will never return {@link #NULL NULL}.</p>
+   * <p>If this element is not specified, or if it is an empty array,
+   * the sole effective configuration value name will be the name of
+   * the annotated element upon which this {@link ConfigurationValue}
+   * appears.</p>
+   *
+   * <p>This element will never return {@code null}.</p>
    *
    * @return the name of the configuration value in question; never
    * {@code null} or {@link ConfigurationValue#NULL NULL}
@@ -91,7 +98,7 @@ public @interface ConfigurationValue {
    * @see #NULL
    */
   @Nonbinding
-  String value() default "";
+  String[] value() default {};
 
   /**
    * The {@link String} representation of the default value to use in
@@ -153,15 +160,7 @@ public @interface ConfigurationValue {
      */
 
 
-    /**
-     * The name of the configuration value in question.
-     *
-     * <p>This field will never be {@code null} or {@link
-     * ConfigurationValue#NULL NULL}.</p>
-     *
-     * @see #value()
-     */
-    private final String name;
+    private final String[] names;
 
     /**
      * The {@link String} representation of the default value to use
@@ -187,8 +186,29 @@ public @interface ConfigurationValue {
      * Creates a new {@link ConfigurationValue.Literal}.
      *
      * @param name the name of the configuration value; may be {@code
-     * null} or {@link ConfigurationValue#NULL NULL} in which case
-     * {@code ""} will be used instead
+     * null} or {@link ConfigurationValue#NULL NULL} in which case an
+     * empty array will be used instead
+     *
+     * @param defaultValue the {@link String} representation of the
+     * default value to use when a suitable configuration value cannot
+     * be found; may be {@code null} in which case {@link
+     * ConfigurationValue#NULL NULL} will be used instead
+     *
+     * @see #value()
+     *
+     * @see #defaultValue()
+     *
+     * @see #Literal(String[], String)
+     */
+    private Literal(final String name, final String defaultValue) {
+      this(name == null ? new String[0] : NULL.equals(name) ? new String[0] : new String[] { name }, defaultValue);
+    }
+
+    /**
+     * Creates a new {@link ConfigurationValue.Literal}.
+     *
+     * @param names the names of the configuration value; may be
+     * {@code null} in which case an empty array will be used instead
      *
      * @param defaultValue the {@link String} representation of the
      * default value to use when a suitable configuration value cannot
@@ -199,9 +219,19 @@ public @interface ConfigurationValue {
      *
      * @see #defaultValue()
      */
-    private Literal(final String name, final String defaultValue) {
+    private Literal(final String[] names, final String defaultValue) {
       super();
-      this.name = name == null ? "" : NULL.equals(name) ? "" : name;
+      if (names == null || names.length <= 0) {
+        this.names = new String[0];
+      } else {
+        final Collection<String> nameCollection = new ArrayList<>();
+        for (final String name : names) {
+          if (name != null && !name.isEmpty() && !name.equals(NULL)) {
+            nameCollection.add(name);
+          }
+        }
+        this.names = nameCollection.toArray(new String[nameCollection.size()]);
+      }
       this.defaultValue = defaultValue == null ? NULL : defaultValue;
     }
 
@@ -233,21 +263,26 @@ public @interface ConfigurationValue {
     }
 
     /**
-     * Returns the name of the configuration value in question.
+     * Returns the names of the configuration value in question.
      *
-     * <p>This field will never return {@code null} or {@link
-     * ConfigurationValue#NULL NULL}.</p>
+     * <p>This field will never return {@code null}.</p>
      *
-     * @return the name of the configuration value in question; never
+     * @return the names of the configuration value in question; never
      * {@code null}
      *
      * @see ConfigurationValue#value()
-     *
-     * @see ConfigurationValue#NULL
      */
     @Override
-    public final String value() {
-      return this.name;
+    public final String[] value() {
+      final String[] returnValue;
+      if (this.names.length <= 0) {
+        returnValue = this.names;
+      } else {
+        final String[] array = new String[this.names.length];
+        System.arraycopy(this.names, 0, array, 0, this.names.length);
+        returnValue = array;
+      }
+      return returnValue;
     }
 
 
@@ -280,7 +315,27 @@ public @interface ConfigurationValue {
      * Returns a new {@link Literal} representing a {@link
      * ConfigurationValue} instance whose {@link
      * ConfigurationValue#value()} method will return the supplied
-     * {@code name} and whose {@link
+     * {@code names}.
+     *
+     * <p>This method never returns {@code null}.</p>
+     *
+     * @param names the names of the configuration value in question;
+     * may be {@code null} in which case an empty array will be used
+     * instead
+     *
+     * @return a non-{@code null} {@link Literal}
+     *
+     * @see ConfigurationValue#value()
+     */
+    public static final Literal of(final String[] names) {
+      return new Literal(names, NULL);
+    }
+    
+    /**
+     * Returns a new {@link Literal} representing a {@link
+     * ConfigurationValue} instance whose {@link
+     * ConfigurationValue#value()} method will return an array
+     * containing only the supplied {@code name} and whose {@link
      * ConfigurationValue#defaultValue()} method will return the
      * supplied {@code defaultValue}.
      *
@@ -302,6 +357,34 @@ public @interface ConfigurationValue {
      */
     public static final Literal of(final String name, final String defaultValue) {
       return new Literal(name, defaultValue);
+    }
+
+    /**
+     * Returns a new {@link Literal} representing a {@link
+     * ConfigurationValue} instance whose {@link
+     * ConfigurationValue#value()} method will return an array
+     * containing only the supplied {@code names} and whose {@link
+     * ConfigurationValue#defaultValue()} method will return the
+     * supplied {@code defaultValue}.
+     *
+     * <p>This method never returns {@code null}.</p>
+     *
+     * @param names the names of the configuration value in question;
+     * may be {@code null} or in which case an empty array will be
+     * used instead
+     *
+     * @param defaultValue the default value for the configuration
+     * value in question; may be {@code null} in which case {@link
+     * ConfigurationValue#NULL NULL} will be used instead
+     *
+     * @return a non-{@code null} {@link Literal}
+     *
+     * @see ConfigurationValue#value()
+     *
+     * @see ConfigurationValue#defaultValue()
+     */
+    public static final Literal of(final String[] names, final String defaultValue) {
+      return new Literal(names, defaultValue);
     }
     
   }
