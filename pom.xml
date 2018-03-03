@@ -71,7 +71,7 @@
       <dependency>
         <groupId>org.microbean</groupId>
         <artifactId>microbean-configuration</artifactId>
-        <version>0.3.0</version>
+        <version>0.3.1</version>
         <type>jar</type>
       </dependency>
       
