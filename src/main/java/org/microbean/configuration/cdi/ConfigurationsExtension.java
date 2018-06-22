@@ -90,7 +90,7 @@ public class ConfigurationsExtension implements Extension {
   /*
    * Static fields.
    */
-  
+
 
   /**
    * An {@linkplain Collections#unmodifiableMap(Map) immutable} {@link
@@ -138,13 +138,13 @@ public class ConfigurationsExtension implements Extension {
    * @see #createLogger()
    */
   protected final Logger logger;
-  
+
 
   /*
    * Constructors.
    */
-  
-  
+
+
   /**
    * Creates a new {@link ConfigurationsExtension}.
    *
@@ -183,8 +183,8 @@ public class ConfigurationsExtension implements Extension {
 
   /**
    * {@linkplain Observes Observes} the {@link BeforeBeanDiscovery}
-   * event and ensures that {@link Configurations} is added as an
-   * {@link AnnotatedType} in {@linkplain Singleton singleton scope}.
+   * event and creates a {@link Configurations} instance that will
+   * eventually be added as a bean itself.
    *
    * @param event the {@link BeforeBeanDiscovery} event being
    * observed; if {@code null}, then no action will be taken
@@ -201,8 +201,6 @@ public class ConfigurationsExtension implements Extension {
     if (event != null) {
       this.configurations = Configurations.newInstance();
       assert this.configurations != null;
-      event.addAnnotatedType(this.configurations.getClass(), "configurations")
-        .add(SingletonLiteral.INSTANCE);
     }
     if (this.logger.isLoggable(Level.FINER)) {
       this.logger.exiting(cn, mn);
@@ -280,7 +278,7 @@ public class ConfigurationsExtension implements Extension {
       this.logger.exiting(cn, mn);
     }
   }
-  
+
   /**
    * {@linkplain Observes Observes} the {@link AfterBeanDiscovery}
    * event and installs a dynamic <a
@@ -312,6 +310,13 @@ public class ConfigurationsExtension implements Extension {
       this.logger.entering(cn, mn, new Object[] { event, beanManager });
     }
     if (event != null && beanManager != null) {
+
+      // Add this.configurations as a Singleton-scoped bean.
+      event.addBean()
+        .addTransitiveTypeClosure(this.configurations.getClass())
+        .createWith(cc -> this.configurations)
+        .scope(Singleton.class);
+
       final Set<Type> types = this.configurations.getConversionTypes();
       if (types != null && !types.isEmpty()) {
         final AnnotatedType<ConfigurationsExtension> thisType = beanManager.createAnnotatedType(ConfigurationsExtension.class);
@@ -348,7 +353,7 @@ public class ConfigurationsExtension implements Extension {
    * Static methods.
    */
 
-  
+
   /**
    * A template of sorts for {@link ProducerFactory} implementations
    * created and installed by the {@link
@@ -480,24 +485,24 @@ public class ConfigurationsExtension implements Extension {
                   names.add(field.getName());
                 } else if (annotated instanceof AnnotatedParameter) {
                   final AnnotatedParameter<?> annotatedParameter = (AnnotatedParameter<?>)annotated;
-                  
+
                   final AnnotatedMember<?> annotatedMember = annotatedParameter.getDeclaringCallable();
                   assert annotatedMember != null;
-                  
+
                   final Member member = annotatedMember.getJavaMember();
                   assert member != null;
                   assert member instanceof Executable;
-                  
+
                   final int parameterIndex = annotatedParameter.getPosition();
                   assert parameterIndex >= 0;
-                  
+
                   final Parameter[] parameters = ((Executable)member).getParameters();
                   assert parameters != null;
                   assert parameters.length >= parameterIndex;
-                  
+
                   final Parameter parameter = parameters[parameterIndex];
                   assert parameter != null;
-                  
+
                   if (parameter.isNamePresent()) {
                     names.add(parameter.getName());
                   } else {
@@ -524,7 +529,7 @@ public class ConfigurationsExtension implements Extension {
                 assert annotated != null;
                 Configuration configuration = null;
                 while (configuration == null) {
-                  configuration = annotated.getAnnotation(Configuration.class);              
+                  configuration = annotated.getAnnotation(Configuration.class);
                   if (configuration == null) {
                     if (annotated instanceof AnnotatedParameter) {
                       annotated = ((AnnotatedParameter)annotated).getDeclaringCallable();
@@ -543,14 +548,14 @@ public class ConfigurationsExtension implements Extension {
                     while (iterator.hasNext()) {
                       final String name = iterator.next();
                       if (name == null || name.isEmpty() || name.equals(ConfigurationValue.NULL)) {
-                        iterator.remove();                        
+                        iterator.remove();
                       } else if (!prefix.isEmpty()) {
                         iterator.set(new StringBuilder(prefix).append('.').append(name).toString());
                       }
                     }
                   }
                 }
-              }              
+              }
             }
           } else if (qualifier instanceof ConfigurationCoordinates) {
             if (configurationCoordinates == null) {
@@ -579,7 +584,7 @@ public class ConfigurationsExtension implements Extension {
     }
     return returnValue;
   }
-  
+
 
   /*
    * Inner and nested classes.
@@ -635,7 +640,7 @@ public class ConfigurationsExtension implements Extension {
      * Constructors.
      */
 
-    
+
     /**
      * Creates a new {@link ConfigurationValueMetadata}.
      *
@@ -791,12 +796,12 @@ public class ConfigurationsExtension implements Extension {
           return false;
         }
 
-        return true;        
+        return true;
       } else {
         return false;
       }
     }
-    
+
   }
 
 
@@ -811,7 +816,7 @@ public class ConfigurationsExtension implements Extension {
    */
   private static class DelegatingBeanAttributes<T> implements BeanAttributes<T> {
 
-    
+
     /*
      * Instance fields.
      */
@@ -850,7 +855,7 @@ public class ConfigurationsExtension implements Extension {
     /*
      * Instance methods.
      */
-    
+
 
     /**
      * Returns the name for this {@link DelegatingBeanAttributes} if
@@ -973,7 +978,7 @@ public class ConfigurationsExtension implements Extension {
     public String toString() {
       return this.delegate.toString();
     }
-    
+
   }
 
 }
