@@ -659,6 +659,8 @@ public class ConfigurationsExtension implements Extension {
      * @see #getNames()
      *
      * @see #getDefaultValue()
+     *
+     * @exception NullPointerException if {@code names} is {@code null}
      */
     private ConfigurationValueMetadata(final Map<String, String> configurationCoordinates,
                                        final Collection<String> names,
@@ -670,7 +672,7 @@ public class ConfigurationsExtension implements Extension {
       } else {
         this.configurationCoordinates = Collections.unmodifiableMap(configurationCoordinates);
       }
-      if (names == null || names.isEmpty()) {
+      if (names.isEmpty()) {
         this.names = Collections.emptySet();
       } else {
         this.names = Collections.unmodifiableCollection(new ArrayList<>(names));
