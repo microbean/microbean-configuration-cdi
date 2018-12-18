@@ -16,6 +16,8 @@
  */
 package org.microbean.configuration.cdi;
 
+import java.net.URL;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.Initialized;
 
@@ -30,6 +32,7 @@ import org.microbean.configuration.cdi.annotation.ConfigurationValue;
 import org.microbean.main.Main;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 @ApplicationScoped
 @Configuration("java")
@@ -69,6 +72,14 @@ public class TestConfigurationsExtension {
                                @ConfigurationCoordinate(name = "c", value = "d")
                                final String javaHome) {
     assertEquals(System.getProperty("java.home"), javaHome);
+  }
+
+  private final void onStartup(@Observes @Initialized(ApplicationScoped.class) final Object event,
+                               @ConfigurationValue("vendor.url")
+                               final URL javaVendorUrl) {
+    // Proves that dynamic producer methods were installed per
+    // conversion type
+    assertNotNull(javaVendorUrl);
   }
   
   @Test

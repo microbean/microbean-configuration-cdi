@@ -258,12 +258,14 @@ public class ConfigurationsExtension implements Extension {
             if (coordinatesMap != null && !coordinatesMap.isEmpty()) {
               final Set<Entry<String, String>> entries = coordinatesMap.entrySet();
               assert entries != null;
+              assert !entries.isEmpty();
               for (final Entry<String, String> entry : entries) {
+                assert entry != null;
                 final String name = entry.getKey();
                 assert name != null;
-                final String value = entry.getValue();
-                assert value != null;
                 if (!literal.containsKey(name)) {
+                  final String value = entry.getValue();
+                  assert value != null;
                   literal.add(new ConfigurationCoordinate.Literal(name, value));
                 }
               }
@@ -309,6 +311,7 @@ public class ConfigurationsExtension implements Extension {
     if (this.logger.isLoggable(Level.FINER)) {
       this.logger.entering(cn, mn, new Object[] { event, beanManager });
     }
+    
     if (event != null && beanManager != null) {
 
       // Add this.configurations as a Singleton-scoped bean.
@@ -317,32 +320,25 @@ public class ConfigurationsExtension implements Extension {
         .createWith(cc -> this.configurations)
         .scope(Singleton.class);
 
+      // For each conversion type, add a producer that makes objects
+      // of that type.  Note that the qualifiers are nonbinding.
       final Set<Type> types = this.configurations.getConversionTypes();
       if (types != null && !types.isEmpty()) {
-        final AnnotatedType<ConfigurationsExtension> thisType = beanManager.createAnnotatedType(ConfigurationsExtension.class);
-        final AnnotatedMethod<? super ConfigurationsExtension> producerMethod = thisType.getMethods().stream()
-          .filter(m -> m.getJavaMember().getName().equals("produceConfigurationValue"))
-          .findFirst()
-          .get();
-        final BeanAttributes<?> producerAttributes = beanManager.createBeanAttributes(producerMethod);
         for (final Type type : types) {
           assert type != null;
-          final Bean<?> bean =
-            beanManager.createBean(new DelegatingBeanAttributes<Object>(producerAttributes) {
-                @Override
-                public final Set<Type> getTypes() {
-                  final Set<Type> types = new HashSet<>();
-                  types.add(Object.class);
-                  types.add(type);
-                  return types;
-                }
-              },
-              ConfigurationsExtension.class,
-              beanManager.getProducerFactory(producerMethod, null /* null OK; producer method is static */));
-          event.addBean(bean);
+          event.addBean()
+            .addTransitiveTypeClosure(type)
+            .addQualifiers(new ConfigurationCoordinates.Literal(),
+                           ConfigurationValue.Literal.of(""))
+            .scope(Dependent.class)
+            .produceWith(cdi ->
+                         produceConfigurationValue(cdi.select(InjectionPoint.class).get(),
+                                                   cdi.select(Configurations.class).get()));
         }
       }
+      
     }
+
     if (this.logger.isLoggable(Level.FINER)) {
       this.logger.exiting(cn, mn);
     }
@@ -362,26 +358,15 @@ public class ConfigurationsExtension implements Extension {
    *
    * <p>This method may return {@code null}.</p>
    *
-   * <p>This method, though annotated with {@link
-   * ConfigurationCoordinates}, {@link ConfigurationValue} and {@link
-   * Dependent}, is <em>not</em> itself a <a
-   * href="http://docs.jboss.org/cdi/spec/2.0.Beta1/cdi-spec.html#producer_method">producer
-   * method</a>, since it is not annotated with {@link Produces}.  It
-   * is instead a method that will be {@linkplain
-   * BeanManager#getProducerFactory(AnnotatedMethod, Bean)
-   * introspected} and used as the effective "body" of dynamically
-   * created producer methods installed by the {@link
-   * #installConfigurationValueProducerMethods(AfterBeanDiscovery,
-   * BeanManager)} method.</p>
-   *
-   * <p>Every producer method that incorporates this method will first
-   * {@linkplain #getMetadata(InjectionPoint)
-   * determine the configuration coordinates at the site of injection}
-   * as well as the name of the configuration value that should be
-   * injected.  {@link Configurations#getValue(Map, String, Type)} is
-   * then used to retrieve the value which is returned as an {@link
-   * Object} by this method, but which will be returned as an object
-   * of the proper type by the "real" producer method.</p>
+   * <p>Every producer method that is effectively implemented by this
+   * method will therefore first {@linkplain
+   * #getMetadata(InjectionPoint) determine the configuration
+   * coordinates at the site of injection} as well as the name of the
+   * configuration value that should be injected.  {@link
+   * Configurations#getValue(Map, String, Type)} is then used to
+   * retrieve the value which is returned as an {@link Object} by this
+   * method, but which will be returned as an object of the proper
+   * type by the "real" producer method.</p>
    *
    * @param injectionPoint the {@link InjectionPoint} describing the
    * site of injection; must not be {@code null}
@@ -400,9 +385,6 @@ public class ConfigurationsExtension implements Extension {
    *
    * @see Configurations#getValue(Map, String, Type)
    */
-  @ConfigurationCoordinates
-  @ConfigurationValue
-  @Dependent
   private static final Object produceConfigurationValue(final InjectionPoint injectionPoint, final Configurations configurations) {
     final String cn = ConfigurationsExtension.class.getName();
     final Logger logger = Logger.getLogger(cn);
