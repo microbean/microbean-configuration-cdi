@@ -1,6 +1,6 @@
 /* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-
  *
- * Copyright © 2017 MicroBean.
+ * Copyright © 2017–2019 microBean™.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,10 @@
  * Provides annotation classes and interfaces for helping to integrate
  * the <a
  * href="https://microbean.github.io/microbean-configuration-api/"
- * target="_parent">microBean Configuration framework</a> into <a
- * href="http://www.cdi-spec.org/" target="_parent">CDI</a>.
+ * target="_parent">microBean&trade; Configuration framework</a> into
+ * <a
+ * href="https://jakarta.ee/specifications/cdi/2.0/cdi-spec-2.0.html"
+ * target="_parent">CDI</a>.
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>

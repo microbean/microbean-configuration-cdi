@@ -1,6 +1,6 @@
 /* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-
  *
- * Copyright © 2017 MicroBean.
+ * Copyright © 2017–2019 microBean™.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,10 +62,10 @@ public @interface ConfigurationValue {
 
   /**
    * A {@link String} that stands in for {@code null}&mdash;annotation
-   * elements cannot be set to {@code null} so if either the {@link
-   * #value()} or {@link #defaultValue()} elements in this class
-   * return the value of this field it is to be interpreted as if it
-   * were actually {@code null}.
+   * elements cannot be set to {@code null} so if the {@link
+   * #defaultValue()} element in this class returns the value of this
+   * field that value is to be interpreted as if it were actually
+   * {@code null}.
    *
    * @see #value()
    *
@@ -94,8 +94,6 @@ public @interface ConfigurationValue {
    *
    * @return the name of the configuration value in question; never
    * {@code null} or {@link ConfigurationValue#NULL NULL}
-   *
-   * @see #NULL
    */
   @Nonbinding
   String[] value() default {};
